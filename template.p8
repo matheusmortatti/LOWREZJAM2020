@@ -637,6 +637,8 @@ end
 -- ACTUAL GAME CODE
 --------------------------------------------------------------------------------------------
 
+screen_size = 64
+poke(0x5f2c, 3)
 
 ------------------------------------
 -- Test State
@@ -645,12 +647,15 @@ end
 teststate = {}
 
 function teststate.init()
-    e_add(bullet{pos=v(64, 64)})
+    e_add(bullet{pos=v(screen_size / 2, screen_size / 2)})
 end
 
 function teststate.update()
     e_update_all()
+    bkt_update()
     do_movement()
+    do_collisions()
+    p_update()
 end
 
 function teststate.draw()
