@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 27
+version 29
 __lua__
 
 ------------------------------------
@@ -675,11 +675,22 @@ function bullet:init()
 end
 
 function bullet:update()
-    self.vel = v(0,0)
+  prev = v(self.vel.x, self.vel.y)
   if (btn(0)) self.vel.x -= 1
   if (btn(1)) self.vel.x += 1
   if (btn(2)) self.vel.y -= 1
   if (btn(3)) self.vel.y += 1
+		
+		norm = self.vel:norm()
+ 	len = min(self.vel:len(), 4) 
+ 
+  if prev == self.vel then
+  	len =  approach(len, 0, .75) 
+  	self.vel.y = approach(len, 0, .75) 
+  end
+ 
+ 	self.vel = norm * len
+ 	
 end
 
 function bullet:render()
