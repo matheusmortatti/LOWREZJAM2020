@@ -647,7 +647,7 @@ poke(0x5f2c, 3)
 teststate = {}
 
 function teststate.init()
-    e_add(bullet{pos=v(screen_size / 2, screen_size / 2)})
+    e_add(player{pos=v(screen_size / 2, screen_size / 2)})
 end
 
 function teststate.update()
@@ -673,18 +673,24 @@ acc = .25
 friction = .2
 
 
-bullet=dynamic:extend({
+player=dynamic:extend({
     hitbox=box(-1,-1,1,1),
     sprite = 1,
     vel=v(0,0),
     t=0
 })
 
-function bullet:init()
+function player:init()
+  self:become("walking")
+end
+
+-- This update function will always get called
+function player:update()
   
 end
 
-function bullet:update()
+-- This one is a state-specific update function
+function player:walking()
   prev = v(self.vel.x, self.vel.y)
   if (btn(0)) self.vel.x -= acc
   if (btn(1)) self.vel.x += acc
@@ -701,7 +707,7 @@ function bullet:update()
  	self.vel = norm * len
 end
 
-function bullet:render()
+function player:render()
     spr_render(self)
 end
 
