@@ -665,6 +665,47 @@ function teststate.draw()
 end
 
 -------------------------------
+-- entity: turnable
+-------------------------------
+
+turnable=dynamic:extend({
+    a=0,
+   	size=v(1,1)
+})
+
+function turnable:render()
+		spr_render_rot(self.sprite,
+    	self.pos.x, self.pos.y,
+ 				self.a,
+    	self.size.x, self.size.y)
+end
+
+//source: https://www.lexaloffle.com/bbs/?pid=52525
+function spr_render_rot(s,x,y,a,w,h)
+	 sw=(w or 1)*8
+	 sh=(h or 1)*8
+	 sx=(s%8)*8
+	 sy=flr(s/8)*8
+	 x0=flr(0.5*sw)
+	 y0=flr(0.5*sh)
+	 a=a/360
+	 sa=sin(a)
+	 ca=cos(a)
+	 for ix=0,sw-1 do
+	  for iy=0,sh-1 do
+	   dx=ix-x0
+	   dy=iy-y0
+	   xx=flr(dx*ca-dy*sa+x0)
+	   yy=flr(dx*sa+dy*ca+y0)
+	   if (xx>=0 and xx<sw and yy>=0 and yy<=sh) then
+	    pset(x+ix,y+iy,sget(sx+xx,sy+yy))
+	   end
+	  end
+	 end
+end
+
+
+-------------------------------
 -- entity: bullet
 -------------------------------
 
@@ -673,9 +714,9 @@ acc = .25
 friction = .2
 
 
-player=dynamic:extend({
+player=turnable:extend({
     hitbox=box(-1,-1,1,1),
-    sprite = 1,
+    sprite = 2,
     vel=v(0,0),
     t=0
 })
@@ -691,26 +732,41 @@ end
 
 -- This one is a state-specific update function
 function player:walking()
-  prev = v(self.vel.x, self.vel.y)
+  if btn(5) then
+  	self:setangle()
+  else
+  	self:setspeed()
+  end
+end
+
+function player:setspeed() 
+		prev = v(self.vel.x, self.vel.y)
   if (btn(0)) self.vel.x -= acc
   if (btn(1)) self.vel.x += acc
   if (btn(2)) self.vel.y -= acc
   if (btn(3)) self.vel.y += acc
 		
-		norm = self.vel:norm()
- 	len = min(self.vel:len(), maxspeed) 
+		norm=self.vel:norm()
+ 	len=min(self.vel:len(), maxspeed) 
  
   if prev == self.vel then
-  	len =  approach(len, 0, friction)
+  	len=approach(len, 0, friction)
   end
  
- 	self.vel = norm * len
+ 	self.vel=norm * len
 end
 
-function player:render()
-    spr_render(self)
+function player:setangle()
+		if (btn(0)) self.a = 270
+  if (btn(1)) self.a = 90
+  if (btn(2)) self.a = 0
+  if (btn(3)) self.a = 180
+  
+		if (btn(0) and btn(2)) self.a = 315
+		if (btn(0) and btn(3)) self.a = 225
+		if (btn(1) and btn(2)) self.a = 45
+		if (btn(1) and btn(3)) self.a = 135
 end
-
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000006666000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
