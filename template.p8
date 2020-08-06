@@ -706,17 +706,16 @@ end
 
 
 -------------------------------
--- entity: bullet
+-- entity: player
 -------------------------------
 
-maxspeed = 1
-acc = .25
-friction = .2
-
-
 player=turnable:extend({
+				maxspeed=1,
+				acc=.25,
+				friction=.2,
+				
     hitbox=box(-1,-1,1,1),
-    sprite = 2,
+    sprite=2,
     vel=v(0,0),
     t=0
 })
@@ -737,41 +736,85 @@ function player:walking()
   else
   	self:setspeed()
   end
+  
+  if btn(4) then
+  	self:shoot()
+  end
 end
 
 function player:setspeed() 
 		prev = v(self.vel.x, self.vel.y)
-  if (btn(0)) self.vel.x -= acc
-  if (btn(1)) self.vel.x += acc
-  if (btn(2)) self.vel.y -= acc
-  if (btn(3)) self.vel.y += acc
+  if (btn(0)) self.vel.x -= self.acc
+  if (btn(1)) self.vel.x += self.acc
+  if (btn(2)) self.vel.y -= self.acc
+  if (btn(3)) self.vel.y += self.acc
 		
 		norm=self.vel:norm()
- 	len=min(self.vel:len(), maxspeed) 
+ 	len=min(self.vel:len(),
+ 	self.maxspeed) 
  
   if prev == self.vel then
-  	len=approach(len, 0, friction)
+  	len=approach(len, 0,
+  		self.friction)
   end
  
  	self.vel=norm * len
 end
 
 function player:setangle()
-		if (btn(0)) self.a = 270
-  if (btn(1)) self.a = 90
-  if (btn(2)) self.a = 0
-  if (btn(3)) self.a = 180
+		if (btn(0)) self.a = 180
+  if (btn(1)) self.a = 0
+  if (btn(2)) self.a = 270
+  if (btn(3)) self.a = 90
   
-		if (btn(0) and btn(2)) self.a = 315
-		if (btn(0) and btn(3)) self.a = 225
-		if (btn(1) and btn(2)) self.a = 45
-		if (btn(1) and btn(3)) self.a = 135
+		if (btn(0) and btn(2)) self.a = 225
+		if (btn(0) and btn(3)) self.a = 135
+		if (btn(1) and btn(2)) self.a = 315
+		if (btn(1) and btn(3)) self.a = 45
 end
+
+function player:shoot()
+		e_add(bullet:new(
+			v(self.pos.x, self.pos.y),
+			self.a))
+end
+
+-------------------------------
+-- entity: bullet
+-------------------------------
+
+bullet=dynamic:extend({
+				speed=2,
+    hitbox=box(-1,-1,1,1),
+    sprite=3,
+    vel=v(0,0),
+    t=0
+})
+
+function bullet:new(pos, a)
+		obj = {}
+  setmetatable(obj, self)
+  self.__index = self
+  
+  self.pos=pos
+  
+  self.vel=v(
+  	self.speed * cos(a),
+			self.speed * sin(a))
+			
+  return obj
+end
+
+function bullet:render() 
+		spr_render(self)
+end
+
+
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000006666000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700060000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0007700006c00c600006600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000060000600066660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700060cc0600060060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000006666000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000066660000000000000aa000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700060000600066600000a99a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0007700006c00c60000666000a9999a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0007700006000060000666000a9999a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700060cc0600066600000a99a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000066660000000000000aa000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
