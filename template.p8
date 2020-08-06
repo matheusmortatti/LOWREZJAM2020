@@ -784,7 +784,7 @@ end
 -------------------------------
 
 bullet=dynamic:extend({
-				speed=2,
+				speed=.1,
     hitbox=box(-1,-1,1,1),
     sprite=3,
     vel=v(0,0),
@@ -799,8 +799,8 @@ function bullet:new(pos, a)
   self.pos=pos
   
   self.vel=v(
-  	self.speed * cos(a),
-			self.speed * sin(a))
+  	self.speed * cos(a/360),
+			self.speed * -sin(a/360))
 			
   return obj
 end
