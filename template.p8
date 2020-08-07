@@ -732,12 +732,11 @@ end
 
 -- This one is a state-specific update function
 function player:walking()
-  if btn(5) then
-  	self:setangle()
-  else
+  if not btn(5) then
   	self:setspeed()
-    self:setangle()
   end
+  	
+  self:setangle()
   
   if btnp(4) then
   	self:shoot()
