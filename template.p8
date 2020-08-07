@@ -674,13 +674,10 @@ turnable=dynamic:extend({
 })
 
 function turnable:render()
-		-- spr_render_rot(self.sprite,
-    -- 	self.pos.x, self.pos.y,
- 		-- 		self.a,
-    -- 	self.size.x, self.size.y)
-    -- draw_rotated(16, 0, 8, 8, self.pos.x+4, self.pos.y+4, self.a, 1)
-
-    rspr(16, 0, self.pos.x, self.pos.y, self.a/360, 1)
+    rspr(8*self.sprite,
+    	self.sprite/16,
+    	self.pos.x, self.pos.y,
+    	self.a/360, 1)
 end
 
 function rspr(sx,sy,x,y,a,w)
@@ -706,30 +703,6 @@ function rspr(sx,sy,x,y,a,w)
         dx0+=ddx0
         dy0+=ddy0
     end
-end
-
--- source: https://www.lexaloffle.com/bbs/?pid=52525
-function spr_render_rot(s,x,y,a,w,h)
-	 sw=(w or 1)*8
-	 sh=(h or 1)*8
-	 sx=(s%8)*8
-	 sy=flr(s/8)*8
-	 x0=flr(0.5*sw)
-	 y0=flr(0.5*sh)
-	 a=a/360
-	 sa=sin(a)
-	 ca=cos(a)
-	 for ix=0,sw-1 do
-	  for iy=0,sh-1 do
-	   dx=ix-x0
-	   dy=iy-y0
-	   xx=flr(dx*ca-dy*sa+x0)
-	   yy=flr(dx*sa+dy*ca+y0)
-	   if (xx>=0 and xx<sw and yy>=0 and yy<=sh) then
-	    pset(x+ix,y+iy,sget(sx+xx,sy+yy))
-	   end
-	  end
-	 end
 end
 
 
