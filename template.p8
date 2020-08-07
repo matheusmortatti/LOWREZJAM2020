@@ -674,10 +674,38 @@ turnable=dynamic:extend({
 })
 
 function turnable:render()
-		spr_render_rot(self.sprite,
-    	self.pos.x, self.pos.y,
- 				self.a,
-    	self.size.x, self.size.y)
+		-- spr_render_rot(self.sprite,
+    -- 	self.pos.x, self.pos.y,
+ 		-- 		self.a,
+    -- 	self.size.x, self.size.y)
+    -- draw_rotated(16, 0, 8, 8, self.pos.x+4, self.pos.y+4, self.a, 1)
+
+    rspr(16, 0, self.pos.x, self.pos.y, self.a/360, 1)
+end
+
+function rspr(sx,sy,x,y,a,w)
+    local ca,sa=cos(a),sin(a)
+    local srcx,srcy
+    local ddx0,ddy0=ca,sa
+    local mask=shl(0xfff8,(w-1))
+    w*=4
+    ca*=w-0.5
+    sa*=w-0.5
+    local dx0,dy0=sa-ca+w,-ca-sa+w
+    w=2*w-1
+    for ix=0,w do
+        srcx,srcy=dx0,dy0
+        for iy=0,w do
+            if band(bor(srcx,srcy),mask)==0 then
+                local c=sget(sx+srcx,sy+srcy)
+                pset(x+ix,y+iy,c)
+            end
+            srcx-=ddy0
+            srcy+=ddx0
+        end
+        dx0+=ddx0
+        dy0+=ddy0
+    end
 end
 
 -- source: https://www.lexaloffle.com/bbs/?pid=52525
@@ -786,7 +814,7 @@ end
 -------------------------------
 
 bullet=dynamic:extend({
-		speed=1,
+		speed=2,
     hitbox=box(-1,-1,1,1),
     sprite=3,
     vel=v(0,0),
@@ -806,7 +834,6 @@ end
 
 function bullet:render() 
 		spr_render(self)
-    print(self.vel:str(), 0, 0, 7)
 end
 
 
