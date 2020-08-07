@@ -680,7 +680,7 @@ function turnable:render()
     	self.size.x, self.size.y)
 end
 
-//source: https://www.lexaloffle.com/bbs/?pid=52525
+-- source: https://www.lexaloffle.com/bbs/?pid=52525
 function spr_render_rot(s,x,y,a,w,h)
 	 sw=(w or 1)*8
 	 sh=(h or 1)*8
@@ -735,21 +735,22 @@ function player:walking()
   	self:setangle()
   else
   	self:setspeed()
+    self:setangle()
   end
   
-  if btn(4) then
+  if btnp(4) then
   	self:shoot()
   end
 end
 
 function player:setspeed() 
-		prev = v(self.vel.x, self.vel.y)
+	prev = v(self.vel.x, self.vel.y)
   if (btn(0)) self.vel.x -= self.acc
   if (btn(1)) self.vel.x += self.acc
   if (btn(2)) self.vel.y -= self.acc
   if (btn(3)) self.vel.y += self.acc
 		
-		norm=self.vel:norm()
+	norm=self.vel:norm()
  	len=min(self.vel:len(),
  	self.maxspeed) 
  
@@ -762,21 +763,22 @@ function player:setspeed()
 end
 
 function player:setangle()
-		if (btn(0)) self.a = 180
+	if (btn(0)) self.a = 180
   if (btn(1)) self.a = 0
   if (btn(2)) self.a = 270
   if (btn(3)) self.a = 90
   
-		if (btn(0) and btn(2)) self.a = 225
-		if (btn(0) and btn(3)) self.a = 135
-		if (btn(1) and btn(2)) self.a = 315
-		if (btn(1) and btn(3)) self.a = 45
+  if (btn(0) and btn(2)) self.a = 225
+  if (btn(0) and btn(3)) self.a = 135
+  if (btn(1) and btn(2)) self.a = 315
+  if (btn(1) and btn(3)) self.a = 45
 end
 
 function player:shoot()
-		e_add(bullet:new(
-			v(self.pos.x, self.pos.y),
-			self.a))
+  e_add(bullet{
+    pos=v(self.pos.x, self.pos.y),
+    vel=v(0,0),
+    a=self.a})
 end
 
 -------------------------------
@@ -784,29 +786,27 @@ end
 -------------------------------
 
 bullet=dynamic:extend({
-				speed=.1,
+		speed=1,
     hitbox=box(-1,-1,1,1),
     sprite=3,
     vel=v(0,0),
-    t=0
+    t=0,
+    lifetime = 30
 })
 
-function bullet:new(pos, a)
-		obj = {}
-  setmetatable(obj, self)
-  self.__index = self
-  
-  self.pos=pos
-  
+function bullet:init()
   self.vel=v(
-  	self.speed * cos(a/360),
-			self.speed * -sin(a/360))
-			
-  return obj
+    self.speed * cos(self.a/360),
+    self.speed * -sin(self.a/360))
+end
+
+function bullet:update()
+  if (self.t > self.lifetime) self.done = true
 end
 
 function bullet:render() 
 		spr_render(self)
+    print(self.vel:str(), 0, 0, 7)
 end
 
 
