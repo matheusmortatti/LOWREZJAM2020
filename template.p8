@@ -875,8 +875,8 @@ spawner=entity:extend({
 })
 
 function spawner:init()
-		e_add(enemy{pos=v(0,0), player=p})
-		e_add(friend{pos=v(56,0), player=p})
+		e_add(enemy{pos=v(0,0), speed=rnd(2), vel=v(1,0), player=p})
+		e_add(friend{pos=v(56,0), speed=rnd(2), vel=v(-1,0), player=p})
 end
 
 -------------------------------
@@ -884,7 +884,7 @@ end
 -------------------------------
 
 npc=changeable:extend({
-		speed=2,
+		speed=1,
 				reloadtime=10,
 				
     hitbox=box(0,0,8,8),
@@ -903,10 +903,17 @@ npc=changeable:extend({
 
 function npc:init()
   self:become("walking")
+  norm = self.vel:norm()
+  self.vel = norm*self.speed
 end
 
 -- This update function will always get called
 function npc:update()
+		if self.pos.x < -8 or self.pos.x > 64 
+		or self.pos.y < -8 or self.pos.y > 64 then
+			-- todo: improve this (was only for testing)
+			self.vel *= -1
+		end
 end
 
 function npc:walking()
