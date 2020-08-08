@@ -886,6 +886,7 @@ end
 npc=changeable:extend({
 		speed=1,
 				reloadtime=10,
+				reloadthresh=10,
 				
     hitbox=box(0,0,8,8),
     sprite=4,
@@ -919,14 +920,18 @@ end
 function npc:walking()
 		if self.t-self.lastshot > self.reloadtime then
 			self:shoot()
-			self.lastshot = self.t -- kinda migue maybe
+			self.lastshot = self.t
+			 + rnd(self.reloadthresh)
+			 --note: with or without random?
 		end
 end
 
 function npc:shoot()
 		direction = (self.player.pos
-															-self.pos)
+															-self.pos
+															+v(rnd(10), rnd(10)))
 															:norm()
+															
 		
 		blt = self:getbullet()
 		
