@@ -606,6 +606,7 @@ end
 ------------------------------------
 
 state = nil
+palt(0, true)
 
 -- Destroys everything from current state
 function reset_state()
@@ -730,7 +731,7 @@ turnable=dynamic:extend({
 })
 
 function turnable:render() 
-		renderrot(self.sprite, self.pos, self.a)
+		renderrot(self.sprite, self.pos, self.a, 0)
 end
 
 function renderrot(sprite, pos, a, ignored)
@@ -799,7 +800,7 @@ player=turnable:extend({
     sprite=2,
     vel=v(0,0),
     t=0,
-    
+    draw_order=4,
     tags={"player"}
 })
 
@@ -899,7 +900,7 @@ npc=changeable:extend({
     changetime=180,
     
     tags={"npc"},
-    collides_with={"player"}
+    --collides_with={"player"}
 })
 
 function npc:init()
