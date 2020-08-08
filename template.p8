@@ -717,10 +717,12 @@ player=turnable:extend({
 				acc=.25,
 				friction=.2,
 				
-    hitbox=box(-1,-1,1,1),
+    hitbox=box(2,2,6,6),
     sprite=2,
     vel=v(0,0),
-    t=0
+    t=0,
+    
+    tags={"player"}
 })
 
 function player:init()
@@ -780,7 +782,8 @@ function player:shoot()
   e_add(bullet{
     pos=v(self.pos.x, self.pos.y),
     vel=v(0,0),
-    a=self.a})
+    a=self.a,
+    origin=self})
 end
 
 -------------------------------
@@ -805,12 +808,14 @@ npc=turnable:extend({ -- still not turn tho
 		speed=2,
 				reloadtime=10,
 				
-    hitbox=box(-1,-1,1,1),
+    hitbox=box(0,0,8,8),
     sprite=4,
     vel=v(0,0),
     t=0,
+    player=nil,
     
-    player=nil
+    tags={"npc"},
+    collides_with={"player"}
 })
 
 function npc:init()
@@ -836,7 +841,12 @@ function npc:shoot()
 									
 		e_add(bullet{
     pos=v(self.pos.x, self.pos.y),
-    vel=direction})
+    vel=direction,
+    origin=self})
+end
+
+function npc:collide()
+	return c_push_out
 end
 
 -------------------------------
@@ -845,11 +855,15 @@ end
 
 bullet=dynamic:extend({
 		speed=2,
-    hitbox=box(-1,-1,1,1),
+    hitbox=box(2,2,6,6),
     sprite=3,
     vel=v(0,0),
     t=0,
-    lifetime = 30
+    lifetime=30,
+    
+    tags={"bullet"},
+    collides_with={"player",
+    															"npc"}
 })
 
 function bullet:init()
@@ -868,6 +882,12 @@ end
 
 function bullet:render() 
 		spr_render(self)
+end
+
+function bullet:collide(e)
+		if e ~= self.origin then
+			self.done = true
+		end
 end
 
 
