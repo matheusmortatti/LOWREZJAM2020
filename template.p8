@@ -664,6 +664,60 @@ function teststate.draw()
     cls()
 
     e_draw_all()
+    p_draw_all()
+end
+
+-------------------------------
+-- entity: particles
+-------------------------------
+
+dust=particle:extend({ })
+
+-- adapted from: https://www.lexaloffle.com/bbs/?pid=58210
+function add_new_dust(x,y,dx,dy,l,s,g,p,f)
+	p_add(dust{
+	    fade=f,
+	    pos=v(x,y),
+	    dx=dx,
+	    dy=dy,
+	    lifetime=l,
+	    rad=s,
+	    p=p,
+	    col=0, --set to color
+	    grav=g
+	})
+end
+
+function dust:update() 
+ --move the particle based on
+ --the speed
+ self.pos.x+=self.dx
+ self.pos.y+=self.dy
+ --and gravity
+ self.dy+=self.grav
+
+ --reduce the radius
+ --this is set to 90%, but
+ --could be altered
+ self.rad*=self.p
+
+ --set the color
+ if type(self.fade)=="table" then
+  --assign color from fade
+  --this code works out how
+  --far through the lifespan
+  --the particle is and then
+  --selects the color from the
+  --table
+  self.col=self.fade[flr(#self.fade*(self.t/self.lifetime))+1]
+ else
+  --just use a fixed color
+  self.col=self.fade            
+ end
+end
+
+function dust:render()
+ circfill(self.pos.x,self.pos.y,self.rad,self.col)
 end
 
 -------------------------------
@@ -885,12 +939,20 @@ function bullet:render()
 end
 
 function bullet:collide(e)
-		if e ~= self.origin then
-			self.done = true
+		if e~=self.origin then
+			self.done=true
+			self:explode()
 		end
 end
 
-
+function bullet:explode()
+	for i=1,10 do
+		add_new_dust(self.pos.x+4,self.pos.y+4,
+			rnd(2)-1,rnd(2)-1,
+			10,rnd(2)+1,0.05,0.9,
+			{7,7,7,7,7,7,6,6,6,6,6,5,5,9,9,10,10,10,10,10,8,8,8,8})
+	end
+end
 __gfx__
 00000000000000000000000000000000888888880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000066660000000000000aa000888888880000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
