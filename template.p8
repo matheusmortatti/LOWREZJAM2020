@@ -857,7 +857,8 @@ player=turnable:extend({
     vel=v(0,0),
     t=0,
     draw_order=4,
-    tags={"player"}
+    tags={"player"},
+    health=10
 })
 
 function player:init()
@@ -919,6 +920,19 @@ function player:shoot()
     vel=v(0,0),
     shtangle=self.a,
     origin=self})
+end
+
+function player:take_hit(dmg)
+  self.health-=dmg
+    shake+=10
+
+    if(self.health <= 0) then
+      self.done = true
+      explode(
+        self.pos.x, self.pos.y,
+        self.hitbox.xr-self.hitbox.xl,
+        self.hitbox.yb-self.hitbox.yt)
+    end
 end
 
 -------------------------------
@@ -1062,7 +1076,7 @@ function bullet:collide(e)
 			self.done=true
 			self:explode()
 
-      if (e.take_hit) e:take_hit(self.dmg)
+      if (self.hit) self:hit(e)
 		end
 end
 
@@ -1079,6 +1093,12 @@ function bullet:explode()
 			{7,7,7,7,7,7,6,6,6,6,6,5,5,9,9,10,10,10,10,10,8,8,8,8})
 	end
   shake += 5
+end
+
+function bullet:hit(e)
+  if e.take_hit then
+    e:take_hit(self.dmg)
+  end
 end
 
 -------------------------------
@@ -1101,6 +1121,12 @@ enemybullet=bullet:extend({
 			sprite=3,
 			collides_with={"player"}
 })
+
+function enemybullet:hit(e)
+  if e:is_a("player") and e.take_hit then
+    e:take_hit(self.dmg)
+  end
+end
 
 -------------------------------
 -- entity: friend
@@ -1132,6 +1158,10 @@ function friendbullet:explode()
 			10,rnd(3)+1,0.05,0.9,
 			{11,11,11,11,11,11,3,3,3,3,3,5,5,3,3,11,11,11,11,11,12,12,12,12})
 	end
+end
+
+function friendbullet:hit(e)
+
 end
 
 __gfx__
