@@ -735,7 +735,7 @@ end
 
 function renderrot(sprite, pos, a, ignored)
   rspr(8*sprite,
-  	sprite/16,
+  	flr(sprite/16),
   	pos.x, pos.y,
   	a/360, 1, ignored)
 end
@@ -765,6 +765,27 @@ function rspr(sx,sy,x,y,a,w,ignored)
   end
 end
 
+
+-------------------------------
+-- entity: changeable
+-------------------------------
+
+changeable=turnable:extend({
+			 sprchange={}
+})
+
+function changeable:render()
+		renderrot(self.sprite, self.pos, self.a, 0)
+		currchange=self.sprchange[flr(#self.sprchange*(
+		self:getcurrchange()))]
+		if currchange ~= nil then
+			renderrot(currchange, self.pos, self.a, 0)
+		end
+end
+
+function changeable:getcurrchange() 
+			return 0
+end
 
 -------------------------------
 -- entity: player
@@ -840,7 +861,7 @@ function player:shoot()
   e_add(bullet{
     pos=v(self.pos.x, self.pos.y),
     vel=v(0,0),
-    a=self.a,
+    shtangle=self.a,
     origin=self})
 end
 
@@ -862,7 +883,7 @@ end
 -- entity: npc
 -------------------------------
 
-npc=turnable:extend({ -- still not turn tho
+npc=changeable:extend({ -- still not turn tho
 		speed=2,
 				reloadtime=10,
 				
@@ -888,15 +909,6 @@ end
 function npc:update()
 end
 
-function npc:render()
-		renderrot(self.sprite, self.pos, self.a)
-		currchange=self.sprchange[flr(#self.sprchange*(
-			min(1, self.t/self.changetime)))]
-		if currchange ~= nil then
-			renderrot(currchange, self.pos, self.a, 0)
-		end
-end
-
 function npc:walking()
 		if self.t-self.lastshot > self.reloadtime then
 			self:shoot()
@@ -912,18 +924,23 @@ function npc:shoot()
 		e_add(bullet{
     pos=v(self.pos.x, self.pos.y),
     vel=direction,
-    origin=self})
+    origin=self,
+    currchange=self:getcurrchange()})
 end
 
 function npc:collide()
 	return c_push_out
 end
 
+function npc:getcurrchange() 
+			return min(1, self.t/self.changetime)
+end
+
 -------------------------------
 -- entity: bullet
 -------------------------------
 
-bullet=dynamic:extend({
+bullet=changeable:extend({
 		speed=2,
     hitbox=box(2,2,6,6),
     sprite=3,
@@ -931,16 +948,20 @@ bullet=dynamic:extend({
     t=0,
     lifetime=30,
     
+    sprchange={8,9,10},
+    changetime=10,
+    currchange=0,
+    
     tags={"bullet"},
     collides_with={"player",
     															"npc"}
 })
 
 function bullet:init()
-		if self.a ~= nil then
+		if self.shtangle ~= nil then
 	  self.vel=v(
-	    cos(self.a/360),
-	    -sin(self.a/360))
+	    cos(self.shtangle/360),
+	    -sin(self.shtangle/360))
 		end
 		
 		self.vel *= self.speed
@@ -950,15 +971,15 @@ function bullet:update()
   if (self.t > self.lifetime) self.done = true
 end
 
-function bullet:render() 
-		spr_render(self)
-end
-
 function bullet:collide(e)
 		if e~=self.origin then
 			self.done=true
 			self:explode()
 		end
+end
+
+function bullet:getcurrchange()
+		return self.currchange
 end
 
 function bullet:explode()
@@ -971,10 +992,10 @@ function bullet:explode()
 end
 __gfx__
 00000000000000000000000000000000888888880000000000000000666666660000000000000000000000000000000000000000000000000000000000000000
-000000000066660000000000000aa000888888880000000006666660666666660000000000000000000000000000000000000000000000000000000000000000
-00700700060000600066600000a99a00888888880066660006666660666666660000000000000000000000000000000000000000000000000000000000000000
-0007700006c00c60000666000a9999a0880880880006600006066060660660660000000000000000000000000000000000000000000000000000000000000000
-0007700006000060000666000a9999a08a8008a80060060006600660666006660000000000000000000000000000000000000000000000000000000000000000
-00700700060cc0600066600000a99a00888888880066660006666660666666660000000000000000000000000000000000000000000000000000000000000000
-000000000066660000000000000aa000888888880000000006666660666666660000000000000000000000000000000000000000000000000000000000000000
+000000000066660000000000000aa000888888880000000006666660666666660000000000000000000770000000000000000000000000000000000000000000
+00700700060000600066600000a99a00888888880066660006666660666666660000000000066000007667000000000000000000000000000000000000000000
+0007700006c00c60000666000a9999a0880880880006600006066060660660660006600000666600076666700000000000000000000000000000000000000000
+0007700006000060000666000a9999a08a8008a80060060006600660666006660006600000666600076666700000000000000000000000000000000000000000
+00700700060cc0600066600000a99a00888888880066660006666660666666660000000000066000007667000000000000000000000000000000000000000000
+000000000066660000000000000aa000888888880000000006666660666666660000000000000000000770000000000000000000000000000000000000000000
 00000000000000000000000000000000888888880000000000000000666666660000000000000000000000000000000000000000000000000000000000000000
