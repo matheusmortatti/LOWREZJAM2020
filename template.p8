@@ -686,7 +686,46 @@ function handle_camera()
 end
 
 -------------------------------
--- entity: particles
+-- entity: explosion particle
+-------------------------------
+
+-------------------------------
+-- smoke particle
+-------------------------------
+
+smoke=particle:extend(
+  {
+    vel=v(0,0),
+    c=9,
+    v=0.1
+  }
+)
+
+function smoke:init()
+  self.vel=v(rnd(0.5)-0.25,-(rnd(1)+0.5))
+  if (not self.r) self.r=rnd(1)+0.5
+end
+
+function smoke:update()
+  self.r-=self.v
+  if (self.r<=0) self.done=true
+end
+
+function smoke:render()
+  if (not self.pos) return  
+  circfill(self.pos.x, self.pos.y, self.r, self.c)
+end
+
+function explode(x, y, w, h)
+  for i=0,10 do
+    p_add(smoke{pos=v(x+w/2+rnd(1)-0.5, 
+                      y+h/2+rnd(1)-0.5),
+                c=choose({7,8,9}),r=rnd(2)+1,v=rnd(0.2)+0.2})
+  end
+end
+
+-------------------------------
+-- entity: dust particle
 -------------------------------
 
 dust=particle:extend({ })
@@ -917,7 +956,8 @@ npc=changeable:extend({
     changetime=180,
     
     tags={"npc"},
-    --collides_with={"player"}
+    collides_with={"player"},
+    health=2
 })
 
 function npc:init()
@@ -964,12 +1004,21 @@ function npc:getbullet()
 	return bullet
 end
 
-function npc:collide()
-	return c_push_out
-end
-
 function npc:getcurrchange() 
 			return min(1, self.t/self.changetime)
+end
+
+function npc:take_hit(dmg)
+  self.health-=dmg
+    shake+=10
+
+    if(self.health <= 0) then
+      self.done = true
+      explode(
+        self.pos.x, self.pos.y,
+        self.hitbox.xr-self.hitbox.xl,
+        self.hitbox.yb-self.hitbox.yt)
+    end
 end
 
 -------------------------------
@@ -990,7 +1039,8 @@ bullet=changeable:extend({
     
     tags={"bullet"},
     collides_with={"player",
-    															"npc"}
+    															"npc"},
+    dmg=1
 })
 
 function bullet:init()
@@ -1011,6 +1061,8 @@ function bullet:collide(e)
 		if e~=self.origin then
 			self.done=true
 			self:explode()
+
+      if (e.take_hit) e:take_hit(self.dmg)
 		end
 end
 
