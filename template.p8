@@ -649,7 +649,7 @@ teststate = {}
 function teststate.init()
 				p = player{pos=v(screen_size / 2, screen_size / 2)}
     e_add(p)
-    e_add(npc{pos=v(0,0), player=p})				
+				e_add(spawner{player=p})    
 end
 
 function teststate.update()
@@ -784,10 +784,24 @@ function player:shoot()
 end
 
 -------------------------------
+-- entity: spawner
+-------------------------------
+
+spawner=entity:extend({
+				reloadtime=10,
+    t=0,
+    player=nil
+})
+
+function spawner:init()
+		e_add(npc{pos=v(0,0), player=p})
+end
+
+-------------------------------
 -- entity: npc
 -------------------------------
 
-npc=turnable:extend({
+npc=turnable:extend({ -- still not turn tho
 		speed=2,
 				reloadtime=10,
 				
@@ -798,7 +812,6 @@ npc=turnable:extend({
     
     player=nil
 })
-
 
 function npc:init()
   self:become("walking")
@@ -847,7 +860,6 @@ function bullet:init()
 		end
 		
 		self.vel *= self.speed
-		
 end
 
 function bullet:update()
