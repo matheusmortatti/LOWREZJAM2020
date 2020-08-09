@@ -1,0 +1,33 @@
+MVC
+
+- player buffs
+	- related to size+projectile power?
+	- size connected to health?
+	- smallest size projectile should cause damage?
+	- how do we show NPC remaining health?
+	- should buffers have a timer?
+
+- enemy spawn
+	- wave based or randomized? Could be both?
+	- will there be a win scenario or just score based?
+
+- arena boundaries
+	- how would enemies move
+	- any better art than all black?
+
+- main menu
+	- also name
+
+Nice to have extras
+
+- art revamp
+	- lore? Possibilities: space gladiator :: purgatory spirits :: masquerade ball dance
+	- music
+	- cool main menu
+	- tutorial text (can we write in PICO-8 font out of the box?)
+
+- test different control schemes
+
+- boss fight
+	- Ok now I'm just dreaming
+
