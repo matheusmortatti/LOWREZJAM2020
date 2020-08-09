@@ -787,17 +787,18 @@ turnable=dynamic:extend({
 })
 
 function turnable:render() 
-		renderrot(self.sprite, self.pos, self.a, self.size, 0)
+		self:renderrot(self.sprite, self.pos,
+		self.a, self.size, self.ignore)
 end
 
-function renderrot(sprite, pos, a, size, ignored)
-  rspr(8*sprite%128,
+function turnable:renderrot(sprite, pos, a, size, ignore)
+  self:rspr(8*sprite%128,
   	flr(sprite/16)*8,
   	pos.x, pos.y,
-  	a/360, size, ignored)
+  	a/360, size, ignore)
 end
 
-function rspr(sx,sy,x,y,a,w,ignored)
+function turnable:rspr(sx,sy,x,y,a,w,ignore)
   local ca,sa=cos(a),sin(a)
   local srcx,srcy
   local ddx0,ddy0=ca,sa
@@ -812,7 +813,9 @@ function rspr(sx,sy,x,y,a,w,ignored)
       for iy=0,w do
           if band(bor(srcx,srcy),mask)==0 then
               local c=sget(sx+srcx,sy+srcy)
-              if (c ~= ignored)	pset(x+ix,y+iy,c)
+              if (not ignore) or (not ignore(self,c,x+ix,y+iy,sx+srcx,sy+srcy)) then 
+              		pset(x+ix,y+iy,c)
+              end
           end
           srcx-=ddy0
           srcy+=ddx0
@@ -822,6 +825,9 @@ function rspr(sx,sy,x,y,a,w,ignored)
   end
 end
 
+function turnable:ignore(c, x, y, sx, sy)
+		return c==0
+end
 -------------------------------
 -- entity: changeable
 -------------------------------
@@ -831,11 +837,11 @@ changeable=turnable:extend({
 })
 
 function changeable:render()
-		renderrot(self.sprite, self.pos, self.a, self.size, 0)
+		self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignorebase)
 		currchange=self.sprchange[flr(#self.sprchange*(
 		self:getcurrchange()))]
 		if currchange ~= nil then
-			renderrot(currchange, self.pos, self.a, self.size, 0)
+			self:renderrot(currchange, self.pos, self.a, self.size, self.ignoreoverlay)
 		end
 end
 
@@ -843,6 +849,13 @@ function changeable:getcurrchange()
 			return 0
 end
 
+function changeable:ignorebase(c, x, y, sx, sy)
+		return c==0
+end
+
+function changeable:ignoreoverlay(c, x, y, sx, sy)
+		return c==0
+end
 -------------------------------
 -- entity: spawner
 -------------------------------
@@ -866,18 +879,18 @@ player=turnable:extend({
 				maxspeed=1,
 				acc=.25,
 				friction=.2,
-				
-    bullet=bullet,
     
     vel=v(0,0),
     t=0,
-    
+
     draw_order=4,
     tags={"player"},
     
     level=2,
     healthperlevel=2,
-    health=2
+    health=2,
+    
+    visionradius=20
 })
 
 function player:init()
@@ -1071,6 +1084,20 @@ function npc:take_hit(dmg)
         self.hitbox.yb-self.hitbox.yt)
     end
 end
+
+function npc:ignorebase(c, x, y, sx, sy)
+		return c==0
+end
+
+function npc:ignoreoverlay(c, x, y, sx, sy)
+		dist = v(self.player.pos.x - x,
+											self.player.pos.y - y)
+											:len()
+	
+		return dist <= self.player.visionradius
+									or c==0
+end
+
 
 -------------------------------
 -- entity: bullet
