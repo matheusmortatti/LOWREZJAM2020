@@ -1,12 +1,5 @@
 MVC
 
-- player buffs
-	- related to size+projectile power?
-	- size connected to health?
-	- smallest size projectile should cause damage?
-	- how do we show NPC remaining health?
-	- should buffers have a timer?
-
 - enemy spawn
 	- wave based or randomized? Could be both?
 	- will there be a win scenario or just score based?
@@ -14,6 +7,11 @@ MVC
 - arena boundaries
 	- how would enemies move
 	- any better art than all black?
+
+- player buffs
+        - how do we show player/NPC remaining health, or should we?
+                (would be nice if it's embedded in the sprite and not just a bar, but that's a plus)
+        - should buffers have a timer? Not sure.
 
 - main menu
 	- also name
