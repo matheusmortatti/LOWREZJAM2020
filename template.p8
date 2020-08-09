@@ -1008,6 +1008,7 @@ npc=changeable:extend({
 		speed=1,
 				reloadtime=10,
 				reloadthresh=10,
+				randomshotoffset=10,
 				
     hitbox=box(0,0,8,8),
     sprite=4,
@@ -1051,10 +1052,11 @@ end
 function npc:shoot()
 		direction = (self.player.pos
 															-self.pos
-															+v(rnd(10), rnd(10)))
+															+v(
+																rnd(self.randomshotoffset),
+																rnd(self.randomshotoffset)))
 															:norm()
 															
-		
 		blt = self:getbullet()
 		
 		e_add(blt{
@@ -1212,7 +1214,8 @@ end
 friendbullet=bullet:extend({
 			sprite=12,
    collides_with={"player"},
-   dmg=-1
+   dmg=-1,
+   randomshotoffset=25
 })
 
 function friendbullet:explode()
