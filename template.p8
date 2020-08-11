@@ -648,6 +648,7 @@ poke(0x5f2c, 3)
 teststate = {}
 
 function teststate.init()
+				e_add(arena)
 				p = player{pos=v(screen_size / 2, screen_size / 2)}
     e_add(p)
 				e_add(spawner{player=p})    
@@ -683,6 +684,16 @@ function handle_camera()
     shake-=1 
     camera(rnd(s_amount)-s_amount/2, rnd(s_amount)-s_amount/2)
   end
+end
+
+-------------------------------
+-- entity: arena
+-------------------------------
+
+arena=entity:extend({})
+
+function arena:render()
+		map(0,0,0,0,8,8)
 end
 
 -------------------------------
