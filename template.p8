@@ -672,6 +672,19 @@ function teststate.draw()
 end
 
 -------------------------------
+-- event
+-------------------------------
+
+event = object:extend{
+	origin=nil,
+	call=nil
+}
+
+function event:exec()
+	self.call(self.origin)
+end
+
+-------------------------------
 -- camera functions
 -------------------------------
 
@@ -867,19 +880,65 @@ end
 function changeable:ignoreoverlay(c, x, y, sx, sy)
 		return c==0
 end
+
+
 -------------------------------
 -- entity: spawner
 -------------------------------
 
 spawner=entity:extend({
-				reloadtime=10,
-    t=0,
-    player=nil
+			wave=1,
+			enemycount=0,
+			friendcount=0
 })
 
 function spawner:init()
-		e_add(enemy{pos=v(0,0), speed=rnd(2), vel=v(1,0), player=p})
-		e_add(friend{pos=v(56,0), speed=rnd(2), vel=v(-1,0), player=p})
+		self:beginwave()
+end
+
+function spawner:update()
+		if self.enemycount==0 then
+				self:nextwave()
+		elseif self.friendcount==0
+				and self.player.level==1 then
+				self:nextwave()
+		end
+end
+
+function spawner:nextwave()
+		self.wave+=1
+		self:beginwave()
+end
+
+function spawner:beginwave()
+		for _,elem in pairs(waves[self.wave]) do
+				e=elem.class:extend(elem.data){}
+				e.player=self.player
+				if e.bullet then
+						if e.bullet.dmg>0 then
+								self.enemycount+=1
+								e.ondestroy=event{
+										origin=self,
+										call=self.enemydestroyed
+								}
+						elseif e.bullet.dmg<0 then
+								self.friendcount+=1
+								e.ondestroy=event{
+										origin=self,
+										call=self.frienddestroyed
+								}
+						end
+				end
+				e_add(e)
+		end
+end
+
+function spawner:frienddestroyed()
+		self.friendcount-=1
+end
+
+function spawner:enemydestroyed()
+		self.enemycount-=1
 end
 
 -------------------------------
@@ -1017,106 +1076,6 @@ function player:setlevel()
 end
 
 -------------------------------
--- entity: npc
--------------------------------
-
-npc=changeable:extend({
-		speed=1,
-				reloadtime=10,
-				reloadthresh=10,
-				randomshotoffset=10,
-				
-    hitbox=box(0,0,8,8),
-    sprite=4,
-    vel=v(0,0),
-    t=0,
-    lastshot=0,
-    player=nil,
-    
-    sprchange={5,6,7},
-    changetime=180,
-    
-    tags={"npc"},
-    collides_with={"player"},
-    health=4
-})
-
-function npc:init()
-  self:become("walking")
-  norm = self.vel:norm()
-  self.vel = norm*self.speed
-end
-
--- This update function will always get called
-function npc:update()
-		if self.pos.x < -8 or self.pos.x > 64 
-		or self.pos.y < -8 or self.pos.y > 64 then
-			-- todo: improve this (was only for testing)
-			self.vel *= -1
-		end
-end
-
-function npc:walking()
-		if self.t-self.lastshot > self.reloadtime then
-			self:shoot()
-			self.lastshot = self.t
-			 + rnd(self.reloadthresh)
-			 --note: with or without random?
-		end
-end
-
-function npc:shoot()
-		direction = (self.player.pos
-															-self.pos
-															+v(
-																rnd(self.randomshotoffset),
-																rnd(self.randomshotoffset)))
-															:norm()
-															
-		blt = self:getbullet()
-		
-		e_add(blt{
-    pos=v(self.pos.x, self.pos.y),
-    vel=direction,
-    origin=self,
-    currchange=self:getcurrchange()})
-end
-
-function npc:getbullet()
-	return bullet
-end
-
-function npc:getcurrchange() 
-			return min(1, self.t/self.changetime)
-end
-
-function npc:take_hit(dmg)
-  self.health-=dmg
-
-    if(self.health <= 0) then
-      self.done = true
-      explode(
-        self.pos.x, self.pos.y,
-        self.hitbox.xr-self.hitbox.xl,
-        self.hitbox.yb-self.hitbox.yt)
-    end
-end
-
-function npc:ignorebase(c, x, y, sx, sy)
-		return c==0
-end
-
-function npc:ignoreoverlay(c, x, y, sx, sy)
-		dist = v(self.player.pos.x - x,
-											self.player.pos.y - y)
-											:len()
-	
-		return dist <= self.player.visionradius
-									or c==0
-end
-
-
--------------------------------
 -- entity: bullet
 -------------------------------
 
@@ -1180,32 +1139,6 @@ function bullet:hit(e)
   if e.take_hit then
     e:take_hit(self.dmg)
   end
-end
-
--------------------------------
--- entity: enemy
--------------------------------
-
-enemy=npc:extend({
-    sprite=4
-})
-
-function enemy:getbullet()
-		return enemybullet
-end
-
--------------------------------
--- entity: friend
--------------------------------
-
-friend=npc:extend({
-    sprite=11,
-    randomshotoffset=25
-})
-
-
-function friend:getbullet()
-		return friendbullet
 end
 
 -------------------------------
@@ -1305,45 +1238,212 @@ function gigabullet:collide(e)
 end
 
 -------------------------------
--- data: playerlevel
+-- entity: npc
 -------------------------------
 
-playerlevel = {
-				{
+npc=changeable:extend({
+		speed=1,
+				reloadtime=10,
+				reloadthresh=10,
+				randomshotoffset=10,
+				
+    hitbox=box(0,0,8,8),
+    sprite=4,
+    bullet=bullet,
+    vel=v(0,0),
+    t=0,
+    lastshot=0,
+    player=nil,
+    
+    sprchange={5,6,7},
+    changetime=180,
+    
+    tags={"npc"},
+    collides_with={"player"},
+    health=4,
+    
+    ondestroy=nil
+})
+
+function npc:init()
+  self:become("walking")
+  norm = self.vel:norm()
+  self.vel = norm*self.speed
+end
+
+-- This update function will always get called
+function npc:update()
+		if self.pos.x < -8 or self.pos.x > 64 
+		or self.pos.y < -8 or self.pos.y > 64 then
+			-- todo: improve this (was only for testing)
+			self.vel *= -1
+		end
+end
+
+function npc:walking()
+		if self.t-self.lastshot > self.reloadtime then
+			self:shoot()
+			self.lastshot = self.t
+			 + rnd(self.reloadthresh)
+			 --note: with or without random?
+		end
+end
+
+function npc:shoot()
+		direction = (self.player.pos
+															-self.pos
+															+v(
+																rnd(self.randomshotoffset),
+																rnd(self.randomshotoffset)))
+															:norm()
+		
+		e_add(self.bullet{
+    pos=v(self.pos.x, self.pos.y),
+    vel=direction,
+    origin=self,
+    currchange=self:getcurrchange()})
+end
+
+function npc:getcurrchange() 
+			return min(1, self.t/self.changetime)
+end
+
+function npc:take_hit(dmg)
+  self.health-=dmg
+  if(self.health <= 0) then
+    self.done = true
+    if self.ondestroy then
+     	self.ondestroy:exec()
+    end
+    explode(
+      self.pos.x, self.pos.y,
+      self.hitbox.xr-self.hitbox.xl,
+      self.hitbox.yb-self.hitbox.yt)
+   end
+end
+
+function npc:ignorebase(c, x, y, sx, sy)
+		return c==0
+end
+
+function npc:ignoreoverlay(c, x, y, sx, sy)
+		dist = v(self.player.pos.x - x,
+											self.player.pos.y - y)
+											:len()
+	
+		return dist <= self.player.visionradius
+									or c==0
+end
+
+
+-------------------------------
+-- entity: enemy
+-------------------------------
+
+enemy=npc:extend({
+    sprite=4,
+    bullet=enemybullet
+})
+
+-------------------------------
+-- entity: friend
+-------------------------------
+
+friend=npc:extend({
+    sprite=11,
+    randomshotoffset=25,
+    bullet=friendbullet
+})
+
+-------------------------------
+-- data: playerlevel
+-------------------------------
+playerlevel=object:extend({
+					size=1,
+					maxspeed=1
+})
+
+playerlevel={
+				playerlevel{
 					sprite=13,
 					hitbox=box(3,3,4,4),
 					bullet=nullbullet,
-					size=1,
 					maxspeed=2
 				},
-				{
+				playerlevel{
 					sprite=2,
 					hitbox=box(2,2,5,5),
 					bullet=smallbullet,
-					size=1,
-					maxspeed=1
 				},
-				{
+				playerlevel{
 					sprite=14,
 					hitbox=box(1,1,6,6),
 					bullet=bullet,
-					size=1,
-					maxspeed=1
 				},
-				{
+				playerlevel{
 					sprite=15,
 					hitbox=box(0,0,7,7),
 					bullet=largebullet,
-					size=1,
-					maxspeed=1
 				},
-				{
+				playerlevel{
 					sprite=16,
 					hitbox=box(0,0,10,10),
 					bullet=gigabullet,
-					size=2,
-					maxspeed=1
+					size=2
 				},
+}
+
+-------------------------------
+-- data: waves
+-------------------------------
+
+waves={
+		{
+		-- wave 1
+				{
+						class=enemy,
+						data={
+								pos=v(0,0),
+								speed=rnd(2),
+								vel=v(1,0)
+						}
+				},
+				{
+						class=friend,
+						data={
+								pos=v(screen_size,0),
+								speed=rnd(2),
+								vel=v(-1,0)
+						}
+				}
+		},
+		{
+		-- wave 2
+				{
+						class=enemy,
+						data={
+								pos=v(0,0),
+								speed=rnd(2),
+								vel=v(1,0)
+						}
+				},
+				{
+						class=enemy,
+						data={
+								pos=v(0,0),
+								speed=rnd(2),
+								vel=v(1,0)
+						}
+				},
+				{
+						class=friend,
+						data={
+								pos=v(screen_size,0),
+								speed=rnd(2),
+								vel=v(-1,0)
+						}
+				}
+		}
 }
 __gfx__
 000000000000000000000000000000008888888800000000006666006666666600000000000000000000000000bbbb0000000000000000000000000085550000
