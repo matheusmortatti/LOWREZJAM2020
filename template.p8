@@ -887,8 +887,10 @@ player=turnable:extend({
     tags={"player"},
     
     level=2,
-    healthperlevel=2,
-    health=2,
+    changelevelamount=2,
+    levelupmeter=0,
+    leveldownmeter=0,
+    
     
     visionradius=20
 })
@@ -955,9 +957,7 @@ function player:shoot()
 end
 
 function player:take_hit(dmg)
-  self.health-=dmg%self.healthperlevel
-				
-				valid=self:updatelevel(flr(dmg/self.healthperlevel))
+				valid=self:updatelevel(dmg)
 				
     if not valid then
       self.done=true
@@ -971,16 +971,21 @@ function player:take_hit(dmg)
 end
 
 function player:updatelevel(diff)
-		self.level-=diff
-  if self.health<=0 then
-  		self.level-=1
-  		self.health=self.healthperlevel
-  end
-  
-  if self.health>2 then
-  		self.level+=1
-  		self.health=self.healthperlevel
-  end
+		if diff>0 then
+				self.leveldownmeter+=diff
+				if self.leveldownmeter>=self.changelevelamount then
+						self.level-=flr(self.leveldownmeter/self.changelevelamount)
+						self.leveldownmeter=0
+						self.levelupmeter=0
+				end
+		else 
+				self.levelupmeter-=diff
+				if self.levelupmeter>=self.changelevelamount then
+						self.level+=flr(self.levelupmeter/self.changelevelamount)
+						self.levelupmeter=0
+						self.leveldownmeter=0
+				end
+		end
   
   self.level=min(#playerlevel, self.level)
 		if self.level>0 then
@@ -1076,7 +1081,6 @@ end
 
 function npc:take_hit(dmg)
   self.health-=dmg
-    shake+=10
 
     if(self.health <= 0) then
       self.done = true
@@ -1184,7 +1188,8 @@ end
 -------------------------------
 
 friend=npc:extend({
-    sprite=11
+    sprite=11,
+    randomshotoffset=25
 })
 
 
@@ -1214,8 +1219,7 @@ end
 friendbullet=bullet:extend({
 			sprite=12,
    collides_with={"player"},
-   dmg=-1,
-   randomshotoffset=25
+   dmg=-1
 })
 
 function friendbullet:explode()
