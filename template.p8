@@ -912,24 +912,26 @@ end
 
 function spawner:beginwave()
 		for _,elem in pairs(waves[self.wave]) do
-				e=elem.class:extend(elem.data){}
-				e.player=self.player
-				if e.bullet then
-						if e.bullet.dmg>0 then
-								self.enemycount+=1
-								e.ondestroy=event{
-										origin=self,
-										call=self.enemydestroyed
-								}
-						elseif e.bullet.dmg<0 then
-								self.friendcount+=1
-								e.ondestroy=event{
-										origin=self,
-										call=self.frienddestroyed
-								}
+				for _=1,(elem.qty or 1) do
+						e=elem.class:extend(elem.data()){}
+						e.player=self.player
+						if e.bullet then
+								if e.bullet.dmg>0 then
+										self.enemycount+=1
+										e.ondestroy=event{
+												origin=self,
+												call=self.enemydestroyed
+										}
+								elseif e.bullet.dmg<0 then
+										self.friendcount+=1
+										e.ondestroy=event{
+												origin=self,
+												call=self.frienddestroyed
+										}
+								end
 						end
+						e_add(e)
 				end
-				e_add(e)
 		end
 end
 
@@ -1402,46 +1404,39 @@ waves={
 		-- wave 1
 				{
 						class=enemy,
-						data={
+						data=function() return {
 								pos=v(0,0),
 								speed=rnd(2),
 								vel=v(1,0)
-						}
+						} end
 				},
 				{
 						class=friend,
-						data={
+						data=function() return {
 								pos=v(screen_size,0),
 								speed=rnd(2),
 								vel=v(-1,0)
-						}
-				}
+						} end
+				},
 		},
 		{
 		-- wave 2
 				{
 						class=enemy,
-						data={
+						qty=2,
+						data=function() return {
 								pos=v(0,0),
 								speed=rnd(2),
 								vel=v(1,0)
-						}
-				},
-				{
-						class=enemy,
-						data={
-								pos=v(0,0),
-								speed=rnd(2),
-								vel=v(1,0)
-						}
+						} end
 				},
 				{
 						class=friend,
-						data={
+						data=function() return {
 								pos=v(screen_size,0),
 								speed=rnd(2),
 								vel=v(-1,0)
-						}
+						} end
 				}
 		}
 }
