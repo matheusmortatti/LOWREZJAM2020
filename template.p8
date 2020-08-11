@@ -815,14 +815,14 @@ function turnable:render()
 		self.a, self.size, self.ignore)
 end
 
-function turnable:renderrot(sprite, pos, a, size, ignore)
+function turnable:renderrot(sprite, pos, a, size, ignore, r)
   self:rspr(8*sprite%128,
   	flr(sprite/16)*8,
   	pos.x, pos.y,
-  	a/360, size, ignore)
+  	a/360, size, ignore, r)
 end
 
-function turnable:rspr(sx,sy,x,y,a,w,ignore)
+function turnable:rspr(sx,sy,x,y,a,w,ignore,r)
   local ca,sa=cos(a),sin(a)
   local srcx,srcy
   local ddx0,ddy0=ca,sa
@@ -832,12 +832,17 @@ function turnable:rspr(sx,sy,x,y,a,w,ignore)
   sa*=w-0.5
   local dx0,dy0=sa-ca+w,-ca-sa+w
   w=2*w-1
+  r=r or w
+
   for ix=0,w do
       srcx,srcy=dx0,dy0
       for iy=0,w do
           if band(bor(srcx,srcy),mask)==0 then
               local c=sget(sx+srcx,sy+srcy)
-              if (not ignore) or (not ignore(self,c,x+ix,y+iy,sx+srcx,sy+srcy)) then 
+              local dist=sqrt((ix-w/2)^2 + (iy-w/2)^2)
+              if ((not ignore) or 
+                 (not ignore(self,c,x+ix,y+iy,sx+srcx,sy+srcy))) and
+                 (dist < r) then 
               		pset(x+ix,y+iy,c)
               end
           end
@@ -857,16 +862,18 @@ end
 -------------------------------
 
 changeable=turnable:extend({
-			 sprchange={}
+			 sprchange=0
 })
 
 function changeable:render()
 		self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignorebase)
-		currchange=self.sprchange[flr(#self.sprchange*(
-		self:getcurrchange()))]
-		if currchange ~= nil then
-			self:renderrot(currchange, self.pos, self.a, self.size, self.ignoreoverlay)
-		end
+    local cc=self:getcurrchange()
+    self:renderrot(self.sprchange, self.pos, self.a, self.size, self.ignoreoverlay, self.size * 8 * cc)
+		-- currchange=self.sprchange[flr(#self.sprchange*(
+		-- self:getcurrchange()))]
+		-- if currchange ~= nil then
+		-- 	self:renderrot(currchange, self.pos, self.a, self.size, self.ignoreoverlay)
+		-- end
 end
 
 function changeable:getcurrchange() 
@@ -1089,7 +1096,7 @@ bullet=changeable:extend({
     t=0,
     lifetime=30,
     
-    sprchange={8,9,10},
+    sprchange=10,
     changetime=10,
     currchange=0,
     
@@ -1245,9 +1252,9 @@ end
 
 npc=changeable:extend({
 		speed=1,
-				reloadtime=10,
-				reloadthresh=10,
-				randomshotoffset=10,
+    reloadtime=30,
+    reloadthresh=10,
+    randomshotoffset=10,
 				
     hitbox=box(0,0,8,8),
     sprite=4,
@@ -1257,7 +1264,7 @@ npc=changeable:extend({
     lastshot=0,
     player=nil,
     
-    sprchange={5,6,7},
+    sprchange=7,
     changetime=180,
     
     tags={"npc"},
@@ -1354,7 +1361,8 @@ enemy=npc:extend({
 friend=npc:extend({
     sprite=11,
     randomshotoffset=25,
-    bullet=friendbullet
+    bullet=friendbullet,
+    sprchange=6
 })
 
 -------------------------------
@@ -1405,17 +1413,19 @@ waves={
 				{
 						class=enemy,
 						data=function() return {
-								pos=v(0,0),
+								pos=v(0,rnd(20)),
 								speed=rnd(2),
-								vel=v(1,0)
+								vel=v(1,0),
+                reloadtime=rnd(5) + 25                
 						} end
 				},
 				{
 						class=friend,
 						data=function() return {
-								pos=v(screen_size,0),
+								pos=v(screen_size,rnd(20)),
 								speed=rnd(2),
-								vel=v(-1,0)
+								vel=v(-1,0),
+                reloadtime=rnd(5) + 10
 						} end
 				},
 		},
@@ -1427,7 +1437,8 @@ waves={
 						data=function() return {
 								pos=v(0,0),
 								speed=rnd(2),
-								vel=v(1,0)
+								vel=v(1,0),
+                reloadtime=rnd(5) + 25
 						} end
 				},
 				{
@@ -1435,7 +1446,8 @@ waves={
 						data=function() return {
 								pos=v(screen_size,0),
 								speed=rnd(2),
-								vel=v(-1,0)
+								vel=v(-1,0),
+                reloadtime=rnd(5) + 10
 						} end
 				}
 		}
