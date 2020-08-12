@@ -820,7 +820,7 @@ function turnable:render()
 end
 
 function turnable:renderrot(sprite, pos, a, size, ignore)  
-		if (ignore==nil or
+		if (not ignore or
 					ignore==self.ignore) and
 					a%180==0 then
 				spr(sprite,pos.x,pos.y,size,size,a==180)
@@ -876,7 +876,7 @@ changeable=turnable:extend({
 })
 
 function changeable:render()
-		self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignorebase)
+		self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignore)
     local ignoreoverlay=self.ignoreoverlay
     local currchange=self:getcurrchange()
     if currchange <=0 or currchange>=1 then
@@ -1002,7 +1002,7 @@ player=turnable:extend({
     leveldownmeter=0,
     
     
-    visionradius=10
+    visionradius=15
 })
 
 function player:init()
@@ -1361,7 +1361,7 @@ function npc:render()
 		if dist>self.player.visionradius+self.size*8 then
 				changeable.render(self)
 		else
-				self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignorebase)
+				self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignore)
     self:renderrot(self.sprchange, self.pos, self.a, self.size, self.ignoreoverlay)
 		end
 end
