@@ -815,18 +815,18 @@ function turnable:render()
 		self.a, self.size, self.ignore)
 end
 
-function turnable:renderrot(sprite, pos, a, size, ignore, r)  
-		if a%180==0 then
+function turnable:renderrot(sprite, pos, a, size, ignore)  
+		if 1==0 then
 				spr(sprite,pos.x,pos.y,size,size,a==180)
 		else
 		  self:rspr(8*sprite%128,
 		  	flr(sprite/16)*8,
 		  	pos.x, pos.y,
-		  	a/360, size, ignore, r)
+		  	a/360, size, ignore)
 		end
 end
 
-function turnable:rspr(sx,sy,x,y,a,w,ignore,r)
+function turnable:rspr(sx,sy,x,y,a,w,ignore)
   local ca,sa=cos(a),sin(a)
   local srcx,srcy
   local ddx0,ddy0=ca,sa
@@ -843,10 +843,9 @@ function turnable:rspr(sx,sy,x,y,a,w,ignore,r)
       for iy=0,w do
           if band(bor(srcx,srcy),mask)==0 then
               local c=sget(sx+srcx,sy+srcy)
-              local dist=sqrt((ix-w/2)^2 + (iy-w/2)^2)
+              -- local dist=sqrt((ix-w/2)^2 + (iy-w/2)^2)
               if ((not ignore) or 
-                 (not ignore(self,c,x+ix,y+iy,sx+srcx,sy+srcy))) and
-                 (dist < r) then 
+                 (not ignore(self,c,x,y,ix,iy,sx,sy,srcx,srcy))) then 
               		pset(x+ix,y+iy,c)
               end
           end
@@ -858,9 +857,10 @@ function turnable:rspr(sx,sy,x,y,a,w,ignore,r)
   end
 end
 
-function turnable:ignore(c, x, y, sx, sy)
+function turnable:ignore(c,x,y,ix,iy,sx,sy,srcx,srcy)
 		return c==0
 end
+
 -------------------------------
 -- entity: changeable
 -------------------------------
@@ -872,7 +872,7 @@ changeable=turnable:extend({
 function changeable:render()
 		self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignorebase)
     local cc=self:getcurrchange()
-    self:renderrot(self.sprchange, self.pos, self.a, self.size, self.ignoreoverlay, self.size * 8 * cc)
+    self:renderrot(self.sprchange, self.pos, self.a, self.size, self.ignoreoverlay)
 		-- currchange=self.sprchange[flr(#self.sprchange*(
 		-- self:getcurrchange()))]
 		-- if currchange ~= nil then
@@ -884,14 +884,21 @@ function changeable:getcurrchange()
 			return 0
 end
 
-function changeable:ignorebase(c, x, y, sx, sy)
+function changeable:ignorebase(c,x,y,ix,iy,sx,sy,srcx,srcy)
 		return c==0
 end
 
-function changeable:ignoreoverlay(c, x, y, sx, sy)
-		return c==0
+function changeable:ignoreoverlay(c,x,y,ix,iy,sx,sy,srcx,srcy)
+			return is_in_radius_from_sprite(ix,iy,self.size,self:getcurrchange()) or
+									c==0
 end
 
+-- util
+function is_in_radius_from_sprite(x,y,size,proportion)
+		local center=(size*8-1)/2
+		local r=size*8*proportion
+		return r<sqrt((x-center)^2 + (y-center)^2)
+end
 
 -------------------------------
 -- entity: spawner
@@ -1336,19 +1343,14 @@ function npc:take_hit(dmg)
    end
 end
 
-function npc:ignorebase(c, x, y, sx, sy)
-		return c==0
-end
-
-function npc:ignoreoverlay(c, x, y, sx, sy)
-		dist = v(self.player.pos.x - x,
-											self.player.pos.y - y)
+function npc:ignoreoverlay(c,x,y,ix,iy,sx,sy,srcx,srcy)
+		local dist=v(self.player.pos.x-x-ix,
+											self.player.pos.y-y-iy)
 											:len()
-	
-		return dist <= self.player.visionradius
-									or c==0
-end
 
+		return dist<=self.player.visionradius or
+									changeable.ignoreoverlay(self,c,x,y,ix,iy,sx,sy,srcx,srcy)
+end
 
 -------------------------------
 -- entity: enemy
