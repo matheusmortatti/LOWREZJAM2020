@@ -546,6 +546,10 @@ end
 -- Utils
 ------------------------------------
 
+function is_close(v1,v2,e)
+  return (v1-v2):len()<e
+end
+
 function sign(val)
   return val<0 and -1 or (val > 0 and 1 or 0)
 end
@@ -1259,6 +1263,38 @@ function gigabullet:collide(e)
 end
 
 -------------------------------
+-- movement types
+-------------------------------
+
+function linear_movement(e)
+  if e.pos.x < -8 or e.pos.x > 64 
+  or e.pos.y < -8 or e.pos.y > 64 then
+    e.dir *= -1
+  end
+  e.vel = e.dir*e.speed
+end
+
+function sine_movement(e)
+  local am = e.a or 5
+  local sm = sin(e.t*e.aspeed) * am
+  local d = v(-e.dir.y, e.dir.x)
+
+  e.pos += d * sm
+  linear_movement(e)
+end
+
+function point_movement(e)
+  local c=e.cur_point
+  local p=e.points[c]
+
+  if (is_close(e.pos,p,e.speed)) e.cur_point+=1
+  if (e.cur_point>#e.points)e.cur_point=1
+
+  e.dir=v(p.x-e.pos.x,p.y-e.pos.y):norm()
+  e.vel = e.dir*e.speed
+end
+
+-------------------------------
 -- entity: npc
 -------------------------------
 
@@ -1272,6 +1308,7 @@ npc=changeable:extend({
     sprite=4,
     bullet=bullet,
     vel=v(0,0),
+    dir=v(0,0),
     t=0,
     lastshot=0,
     player=nil,
@@ -1282,32 +1319,25 @@ npc=changeable:extend({
     tags={"npc"},
     collides_with={"player"},
     health=4,
+    move=linear_movement,
     
     ondestroy=nil
 })
 
 function npc:init()
-  self:become("walking")
-  norm = self.vel:norm()
-  self.vel = norm*self.speed
+  self.dir = self.dir:norm()
 end
 
 -- This update function will always get called
 function npc:update()
-		if self.pos.x < -8 or self.pos.x > 64 
-		or self.pos.y < -8 or self.pos.y > 64 then
-			-- todo: improve this (was only for testing)
-			self.vel *= -1
-		end
-end
-
-function npc:walking()
-		if self.t-self.lastshot > self.reloadtime then
+    if self.t-self.lastshot > self.reloadtime then
 			self:shoot()
 			self.lastshot = self.t
 			 + rnd(self.reloadthresh)
 			 --note: with or without random?
 		end
+
+    self.move(self)
 end
 
 function npc:shoot()
@@ -1422,8 +1452,11 @@ waves={
 						data=function() return {
 								pos=v(0,rnd(20)),
 								speed=rnd(2),
-								vel=v(1,0),
-                reloadtime=rnd(5) + 25                
+								dir=v(0.5,0.5),
+                reloadtime=rnd(5) + 25,
+                move=sine_movement,
+                a=1,
+                aspeed=0.05,
 						} end
 				},
 				{
@@ -1431,8 +1464,11 @@ waves={
 						data=function() return {
 								pos=v(screen_size,rnd(20)),
 								speed=rnd(2),
-								vel=v(-1,0),
-                reloadtime=rnd(5) + 10
+								dir=v(-1,0),
+                reloadtime=rnd(5) + 10,
+                move=point_movement,
+                points={v(8,8),v(8,56),v(56,56),v(56,8)},
+                cur_point=1
 						} end
 				},
 		},
@@ -1444,7 +1480,7 @@ waves={
 						data=function() return {
 								pos=v(0,0),
 								speed=rnd(2),
-								vel=v(1,0),
+								dir=v(1,0),
                 reloadtime=rnd(5) + 25
 						} end
 				},
@@ -1453,7 +1489,7 @@ waves={
 						data=function() return {
 								pos=v(screen_size,0),
 								speed=rnd(2),
-								vel=v(-1,0),
+								dir=v(-1,0),
                 reloadtime=rnd(5) + 10
 						} end
 				}
