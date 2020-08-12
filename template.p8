@@ -820,7 +820,9 @@ function turnable:render()
 end
 
 function turnable:renderrot(sprite, pos, a, size, ignore)  
-		if 1==0 then
+		if (ignore==nil or
+					ignore==self.ignore) and
+					a%180==0 then
 				spr(sprite,pos.x,pos.y,size,size,a==180)
 		else
 		  self:rspr(8*sprite%128,
@@ -875,21 +877,16 @@ changeable=turnable:extend({
 
 function changeable:render()
 		self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignorebase)
-    local cc=self:getcurrchange()
-    self:renderrot(self.sprchange, self.pos, self.a, self.size, self.ignoreoverlay)
-		-- currchange=self.sprchange[flr(#self.sprchange*(
-		-- self:getcurrchange()))]
-		-- if currchange ~= nil then
-		-- 	self:renderrot(currchange, self.pos, self.a, self.size, self.ignoreoverlay)
-		-- end
+    local ignoreoverlay=self.ignoreoverlay
+    local currchange=self:getcurrchange()
+    if currchange <=0 or currchange>=1 then
+    		ignoreoverlay=nil
+    end
+    	self:renderrot(self.sprchange, self.pos, self.a, self.size, ignoreoverlay)
 end
 
 function changeable:getcurrchange() 
 			return 0
-end
-
-function changeable:ignorebase(c,x,y,ix,iy,sx,sy,srcx,srcy)
-		return c==0
 end
 
 function changeable:ignoreoverlay(c,x,y,ix,iy,sx,sy,srcx,srcy)
@@ -902,6 +899,25 @@ function is_in_radius_from_sprite(x,y,size,proportion)
 		local center=(size*8-1)/2
 		local r=size*8*proportion
 		return r<sqrt((x-center)^2 + (y-center)^2)
+end
+
+-- util (could be removed for space optimization)
+function changeable:draw_with_mask(sprite,pos,size,ignore)  
+		local sx=8*sprite%128
+		local sy=flr(sprite/16)*8
+		local x=pos.x
+		local y=pos.y	
+		local w=8*size-1
+
+		for ix=0,w do
+				for iy=0,w do
+						local c=sget(sx+ix, sy+iy)
+						if not ignore or
+								not ignore(self,c,x,y,ix,iy,sx,sy,srcx,srcy) then
+								pset(x+ix, y+iy)
+						end
+				end
+		end
 end
 
 -------------------------------
@@ -986,7 +1002,7 @@ player=turnable:extend({
     leveldownmeter=0,
     
     
-    visionradius=20
+    visionradius=10
 })
 
 function player:init()
@@ -1340,6 +1356,16 @@ function npc:update()
     self.move(self)
 end
 
+function npc:render()
+		local dist=self:getplayerdist(self.pos.x, self.pos.y)
+		if dist>self.player.visionradius+self.size*8 then
+				changeable.render(self)
+		else
+				self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignorebase)
+    self:renderrot(self.sprchange, self.pos, self.a, self.size, self.ignoreoverlay)
+		end
+end
+
 function npc:shoot()
 		direction = (self.player.pos
 															-self.pos
@@ -1374,12 +1400,16 @@ function npc:take_hit(dmg)
 end
 
 function npc:ignoreoverlay(c,x,y,ix,iy,sx,sy,srcx,srcy)
-		local dist=v(self.player.pos.x-x-ix,
-											self.player.pos.y-y-iy)
-											:len()
+		local dist=self:getplayerdist(x+ix,y+iy)
 
 		return dist<=self.player.visionradius or
 									changeable.ignoreoverlay(self,c,x,y,ix,iy,sx,sy,srcx,srcy)
+end
+
+function npc:getplayerdist(x,y)
+		return v(self.player.pos.x-x,
+											self.player.pos.y-y)
+											:len()
 end
 
 -------------------------------
