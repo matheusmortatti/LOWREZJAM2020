@@ -815,11 +815,15 @@ function turnable:render()
 		self.a, self.size, self.ignore)
 end
 
-function turnable:renderrot(sprite, pos, a, size, ignore, r)
-  self:rspr(8*sprite%128,
-  	flr(sprite/16)*8,
-  	pos.x, pos.y,
-  	a/360, size, ignore, r)
+function turnable:renderrot(sprite, pos, a, size, ignore, r)  
+		if a%180==0 then
+				spr(sprite,pos.x,pos.y,size,size,a==180)
+		else
+		  self:rspr(8*sprite%128,
+		  	flr(sprite/16)*8,
+		  	pos.x, pos.y,
+		  	a/360, size, ignore, r)
+		end
 end
 
 function turnable:rspr(sx,sy,x,y,a,w,ignore,r)
