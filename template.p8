@@ -627,7 +627,7 @@ function change_state(new_state)
 end
 
 function _init()
-    change_state(teststate)
+    change_state(initialstate)
 end
 
 function _update()
@@ -646,19 +646,16 @@ screen_size = 64
 poke(0x5f2c, 3)
 
 ------------------------------------
--- Test State
+-- baseState
 ------------------------------------
 
-teststate = {}
+basestate = object:extend{}
 
-function teststate.init()
-				e_add(arena)
-				p = player{pos=v(screen_size / 2, screen_size / 2)}
-    e_add(p)
-				e_add(spawner{player=p})    
+function basestate:init()
+
 end
 
-function teststate.update()
+function basestate:update()
     e_update_all()
     bkt_update()
     do_movement()
@@ -666,13 +663,36 @@ function teststate.update()
     p_update()
 end
 
-function teststate.draw()
+function basestate:draw()
     cls()
 
     e_draw_all()
     p_draw_all()
 
     handle_camera()
+end
+
+------------------------------------
+-- game State
+------------------------------------
+
+gamestate = basestate:extend({})
+
+function gamestate:init()
+				e_add(arena)
+				p = player{pos=v(screen_size / 2, screen_size / 2)}
+    e_add(p)
+				e_add(spawner{player=p})    
+end
+
+------------------------------------
+-- menu State
+------------------------------------
+
+menustate = basestate:extend({})
+
+function menustate:init()
+				e_add(menu)
 end
 
 -------------------------------
@@ -702,6 +722,30 @@ function handle_camera()
     camera(rnd(s_amount)-s_amount/2, rnd(s_amount)-s_amount/2)
   end
 end
+
+-------------------------------
+-- entity: menu
+-------------------------------
+
+menu=entity:extend({})
+
+function menu:update()
+		if btn(5) then
+				change_state(gamestate)
+		end
+end
+
+function menu:render()
+		map(0,0,0,0,8,8)
+		print("press x to start", 0, screen_size/2)
+end
+
+-------------------------------
+-- begin game
+-------------------------------
+
+
+initialstate=menustate
 
 -------------------------------
 -- entity: arena
