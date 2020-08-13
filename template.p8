@@ -880,7 +880,7 @@ function changeable:render()
     local ignoreoverlay=self.ignoreoverlay
     local currchange=self:getcurrchange()
     if currchange <=0 or currchange>=1 then
-    		ignoreoverlay=nil
+    		ignoreoverlay=self.ignore
     end
     	self:renderrot(self.sprchange, self.pos, self.a, self.size, ignoreoverlay)
 end
