@@ -902,23 +902,23 @@ function is_in_radius_from_sprite(x,y,size,proportion)
 end
 
 -- util (could be removed for space optimization)
-function changeable:draw_with_mask(sprite,pos,size,ignore)  
-		local sx=8*sprite%128
-		local sy=flr(sprite/16)*8
-		local x=pos.x
-		local y=pos.y	
-		local w=8*size-1
+//function changeable:draw_with_mask(sprite,pos,size,ignore)  
+//		local sx=8*sprite%128
+//		local sy=flr(sprite/16)*8
+//		local x=pos.x
+//		local y=pos.y	
+//		local w=8*size-1
 
-		for ix=0,w do
-				for iy=0,w do
-						local c=sget(sx+ix, sy+iy)
-						if not ignore or
-								not ignore(self,c,x,y,ix,iy,sx,sy,srcx,srcy) then
-								pset(x+ix, y+iy)
-						end
-				end
-		end
-end
+//		for ix=0,w do
+//				for iy=0,w do
+//						local c=sget(sx+ix, sy+iy)
+//						if not ignore or
+//								not ignore(self,c,x,y,ix,iy,sx,sy,srcx,srcy) then
+//								pset(x+ix, y+iy)
+//						end
+//				end
+//		end
+//end
 
 -------------------------------
 -- entity: spawner
