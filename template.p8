@@ -1503,7 +1503,9 @@ end
 -------------------------------
 
 enemy=npc:extend({
-    sprite=4,
+    sprite=56,
+    sprchange=24,
+    asize=4,
     bullet=enemybullet
 })
 
