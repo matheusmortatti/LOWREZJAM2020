@@ -542,6 +542,21 @@ function spr_render(e)
   spr(e.sprite, e.pos.x, e.pos.y)
 end
 
+invoke_func = {}
+function invoke(func,t,p)
+  add(invoke_func,{func,0,t,p})
+end
+
+function update_invoke()
+  for i=#invoke_func,1,-1 do
+    invoke_func[i][2]+=1
+    if invoke_func[i][2]>=invoke_func[i][3] then
+      invoke_func[i][1](invoke_func[i][4])
+      del(invoke_func,invoke_func[i])
+    end
+  end
+end
+
 ------------------------------------
 -- Utils
 ------------------------------------
@@ -614,7 +629,9 @@ palt(0, true)
 
 -- Destroys everything from current state
 function reset_state()
-
+	entities = {}
+	particles = {}
+	r_entities = {}
 end
 
 function change_state(new_state)
@@ -661,6 +678,7 @@ function basestate:update()
     do_movement()
     do_collisions()
     p_update()
+    update_invoke()
 end
 
 function basestate:draw()
@@ -1114,8 +1132,9 @@ end
 function player:take_hit(dmg)
 				valid=self:updatelevel(dmg)
 				
-    if not valid then
+    if not valid and not self.done then
       self.done=true
+      invoke(function()run() end,30,self)
       explode(
         self.pos.x, self.pos.y,
         self.hitbox.xr-self.hitbox.xl,
