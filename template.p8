@@ -1120,14 +1120,16 @@ end
 -- entity: bullet
 -------------------------------
 
-bullet=changeable:extend({
+bullet=dynamic:extend({
 		speed=1,
     hitbox=box(2,2,6,6),
-    sprite=3,
     vel=v(0,0),
     t=0,
     lifetime=30,
     
+    colors={9,8},
+   	size=2,
+   
     sprchange=10,
     changetime=10,
     currchange=0,
@@ -1146,6 +1148,25 @@ function bullet:init()
 		end
 		
 		self.vel *= self.speed
+end
+
+function bullet:render()
+			local pos=v(self.pos.x+
+				(self.hitbox.xl+self.hitbox.xr)/2,
+				self.pos.y+
+				(self.hitbox.yt+self.hitbox.yb)/2)
+
+			for i=1,#self.colors do
+				circfill(pos.x,pos.y,
+													ceil(self.size/i), self.colors[i])
+			end
+			
+			if self.currchange~=0 then
+				circfill(pos.x,pos.y,
+													self.size*self.currchange, 7)
+				circfill(pos.x,pos.y,
+													self.size*self.currchange/2, 6)
+			end
 end
 
 function bullet:update()
@@ -1202,7 +1223,7 @@ end
 -------------------------------
 
 friendbullet=bullet:extend({
-			sprite=12,
+			colors={12,11},
    collides_with={"player"},
    dmg=-1
 })
@@ -1232,6 +1253,10 @@ nullbullet=bullet:extend({
 			dmg=0
 })
 
+function nullbullet:render()
+		spr_render(self)
+end
+
 function nullbullet:hit(e)
 
 end
@@ -1257,7 +1282,8 @@ smallbullet=bullet:extend({
 -------------------------------
 
 largebullet=bullet:extend({
-			sprite=20,
+			colors={10,9,2},
+			size=3,
 			dmg=4
 })
 
@@ -1266,9 +1292,9 @@ largebullet=bullet:extend({
 -------------------------------
 
 gigabullet=bullet:extend({
-			sprite=21,
+			colors={10,8,14,2},
 			dmg=4,
-			size=2,
+			size=5,
 			hitbox=box(1,1,12,12)
 })
 
