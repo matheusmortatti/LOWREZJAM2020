@@ -878,23 +878,24 @@ turnable=dynamic:extend({
 
 function turnable:render() 
 		self:renderrot(self.sprite, self.pos,
-		self.a, self.size, self.ignore)
+		self.a, self.size, self.inverted, self.ignore)
 end
 
-function turnable:renderrot(sprite, pos, a, size, ignore)  
+function turnable:renderrot(sprite, pos, a, size, invert, ignore) 
 		if (not ignore or
 					ignore==self.ignore) and
 					a%180==0 then
-				spr(sprite,pos.x,pos.y,size,size,a==180)
+				invertxor=(a~=180 and invert) or (a==180 and not invert)
+				spr(sprite,pos.x,pos.y,size,size,invertxor, a==180)
 		else
 		  self:rspr(8*sprite%128,
 		  	flr(sprite/16)*8,
-		  	pos.x, pos.y,
-		  	a/360, size, ignore)
+		  	pos.x,pos.y,
+		  	a/360,size,invert,ignore)
 		end
 end
 
-function turnable:rspr(sx,sy,x,y,a,w,ignore)
+function turnable:rspr(sx,sy,x,y,a,w,invert,ignore)
   local ca,sa=cos(a),sin(a)
   local srcx,srcy
   local ddx0,ddy0=ca,sa
@@ -909,8 +910,12 @@ function turnable:rspr(sx,sy,x,y,a,w,ignore)
   for ix=0,w do
       srcx,srcy=dx0,dy0
       for iy=0,w do
+      				local isrcx=srcx
+      				if invert then
+      						isrcx=w+1-srcx
+      				end
           if band(bor(srcx,srcy),mask)==0 then
-              local c=sget(sx+srcx,sy+srcy)
+              local c=sget(sx+isrcx,sy+srcy)
               -- local dist=sqrt((ix-w/2)^2 + (iy-w/2)^2)
               if ((not ignore) or 
                  (not ignore(self,c,x,y,ix,iy,sx,sy,srcx,srcy))) then 
@@ -938,13 +943,13 @@ changeable=turnable:extend({
 })
 
 function changeable:render()
-		self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignore)
+		self:renderrot(self.sprite, self.pos, self.a, self.size, self.inverted, self.ignore)
     local ignoreoverlay=self.ignoreoverlay
     local currchange=self:getcurrchange()
     if currchange <=0 or currchange>=1 then
     		ignoreoverlay=self.ignore
     end
-    	self:renderrot(self.sprchange, self.pos, self.a, self.size, ignoreoverlay)
+    	self:renderrot(self.sprchange, self.pos, self.a, self.size, self.inverted, ignoreoverlay)
 end
 
 function changeable:getcurrchange() 
@@ -1453,21 +1458,22 @@ function npc:update()
 end
 
 function npc:render()
-	if self.at>self.ft then
-		self.at=0
-		self.sprite+=1
-		self.sprchange+=1
-		if(self.sprite>=self.s_end)self.sprite=self.s_beg self.sprchange=self.sc_beg
-	end
-	
-	self.at+=1
+		if self.at>self.ft then
+			self.at=0
+			self.sprite+=1
+			self.sprchange+=1
+			if(self.sprite>=self.s_end)self.sprite=self.s_beg self.sprchange=self.sc_beg
+		end
+		
+		self.at+=1
 
+		self.inverted=self.vel.x>0
 		local dist=self:getplayerdist(self.pos.x, self.pos.y)
 		if dist>self.player.visionradius+self.size*8 then
 				changeable.render(self)
 		else
-				self:renderrot(self.sprite, self.pos, self.a, self.size, self.ignore)
-    self:renderrot(self.sprchange, self.pos, self.a, self.size, self.ignoreoverlay)
+				self:renderrot(self.sprite, self.pos, self.a, self.size, self.inverted, self.ignore)
+    self:renderrot(self.sprchange, self.pos, self.a, self.size, self.inverted, self.ignoreoverlay)
 		end
 end
 
@@ -1590,10 +1596,9 @@ waves={
 						data=function() return {
 								pos=v(0,rnd(20)),
 								speed=rnd(2),
-								dir=v(0.5,0.5),
+								dir=v(-1,0),
                 reloadtime=rnd(5) + 25,
                 move=sine_movement,
-                a=1,
                 aspeed=0.05,
 						} end
 				},
