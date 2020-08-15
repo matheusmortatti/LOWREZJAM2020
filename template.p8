@@ -1253,7 +1253,7 @@ bullet=dynamic:extend({
     hitbox=box(2,2,6,6),
     vel=v(0,0),
     t=0,
-    lifetime=30,
+    lifetime=120,
     
     colors={9,8},
    	size=2,
