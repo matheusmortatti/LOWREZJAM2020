@@ -1611,18 +1611,19 @@ friend=npc:extend({
 friendtutorial=friend:extend({
 		reloadtime=10000,
   randomshotoffset=0,
-  speed=0	
+  speed=0,
+  changetime=1800
 })
 
 function friendtutorial:init()
 		friend:init(self)
 		invoke(function()
 				self:shoot()
-		end,60,self)
+		end,120,self)
 		
 		invoke(function()
 				self.done=true
-		end,120,self)
+		end,240,self)
 end
 
 -------------------------------
@@ -1697,8 +1698,7 @@ waves={
 								speed=0,
 								dir=v(-1,0),
         reloadtime=rnd(5) + 120,
-        randomshotoffset=50
-             
+        randomshotoffset=50  
 						} end
 				},
 		},
