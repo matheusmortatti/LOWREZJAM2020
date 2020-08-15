@@ -691,19 +691,6 @@ function basestate:draw()
 end
 
 ------------------------------------
--- game State
-------------------------------------
-
-gamestate = basestate:extend({})
-
-function gamestate:init()
-				e_add(arena)
-				p = player{pos=v(screen_size / 2, screen_size / 2)}
-    e_add(p)
-				e_add(spawner{player=p})    
-end
-
-------------------------------------
 -- menu State
 ------------------------------------
 
@@ -712,6 +699,30 @@ menustate = basestate:extend({})
 function menustate:init()
 				e_add(menu)
 end
+
+------------------------------------
+-- game State
+------------------------------------
+
+gamestate = basestate:extend({})
+
+function gamestate:init()
+				e_add(arena)
+				
+				p = player{pos=v(screen_size / 2, screen_size / 2)}
+    e_add(p)
+    
+    s=spawner{player=p}
+				e_add(s) 
+				
+				e_add(tutorial{player=p,spawner=s})   
+end
+
+-------------------------------
+-- begin game
+-------------------------------
+
+initialstate=menustate
 
 -------------------------------
 -- event
@@ -759,13 +770,6 @@ function menu:render()
 end
 
 -------------------------------
--- begin game
--------------------------------
-
-
-initialstate=menustate
-
--------------------------------
 -- entity: arena
 -------------------------------
 
@@ -773,6 +777,50 @@ arena=entity:extend({})
 
 function arena:render()
 		map(0,0,0,0,8,8)
+end
+
+-------------------------------
+-- entity: tutorial
+-------------------------------
+
+tutorial=entity:extend({})
+
+function tutorial:init()
+		self:become("changingdirection")
+		self.spawner.stopchange=true
+end
+
+function tutorial:leveling()
+		printh(self.player.level)
+		if self.player.level~=1 then
+				self:become("ending")
+		end
+end
+
+function tutorial:changingdirection()
+		self.showtext=true
+		printh(self.player.a)
+		if self.player.a~=0 then
+				self:become("leveling")
+				invoke(function() self.spawner:nextwave() end, 30, self)
+		end
+end
+
+function tutorial:ending()
+		invoke(function()
+				self.player:become("walking")
+				self.spawner.stopchange=false
+				self.done=true
+		 end, 30, self)
+end
+
+function tutorial:render()
+		if self.showtext then
+			print("x+arrows:",
+					15,screen_size*2/3, 7)
+			print("change direction",
+					0,screen_size*5/6, 7)
+		end
 end
 
 -------------------------------
@@ -1002,10 +1050,12 @@ function spawner:init()
 end
 
 function spawner:update()
-		if self.enemycount==0 then
+		if self.enemycount==0 
+				and not self.stopchange then
 				self:nextwave()
 		elseif self.friendcount==0
-				and self.player.level==1 then
+				and self.player.level==1
+				and not self.stopchange then
 				self:nextwave()
 		end
 end
@@ -1063,7 +1113,7 @@ player=turnable:extend({
     draw_order=4,
     tags={"player"},
     
-    level=2,
+    level=1,
     changelevelamount=2,
     levelupmeter=0,
     leveldownmeter=0,
@@ -1073,13 +1123,23 @@ player=turnable:extend({
 })
 
 function player:init()
-  self:become("walking")
+  self:become("begin")
   self:setlevel()
 end
 
 -- This update function will always get called
 function player:update()
   
+end
+
+function player:begin()
+		if btn(5) then
+				self:setangle()
+		end
+		
+		if btnp(4) then
+  	self:shoot()
+  end
 end
 
 -- This one is a state-specific update function
@@ -1198,8 +1258,6 @@ bullet=dynamic:extend({
     colors={9,8},
    	size=2,
    
-    sprchange=10,
-    changetime=10,
     currchange=0,
     
     tags={"bullet"},
@@ -1467,7 +1525,7 @@ function npc:render()
 		
 		self.at+=1
 
-		self.inverted=self.vel.x>0
+		self.inverted=self.dir.x>0
 		local dist=self:getplayerdist(self.pos.x, self.pos.y)
 		if dist>self.player.visionradius+self.size*8 then
 				changeable.render(self)
@@ -1547,6 +1605,27 @@ friend=npc:extend({
 })
 
 -------------------------------
+-- entity: friend tutorial
+-------------------------------
+
+friendtutorial=friend:extend({
+		reloadtime=10000,
+  randomshotoffset=0,
+  speed=0	
+})
+
+function friendtutorial:init()
+		friend:init(self)
+		invoke(function()
+				self:shoot()
+		end,60,self)
+		
+		invoke(function()
+				self.done=true
+		end,120,self)
+end
+
+-------------------------------
 -- data: playerlevel
 -------------------------------
 playerlevel=object:extend({
@@ -1589,8 +1668,42 @@ playerlevel={
 -------------------------------
 
 waves={
+		-- the void before tutorial
 		{
-		-- wave 1
+		},
+		-- tutorial
+		{
+				{
+						class=friendtutorial,
+						data=function() return {
+								pos=v(0,screen_size/2),
+								dir=v(1,0),
+						} end
+				},
+				{
+						class=friendtutorial,
+						data=function() return {
+								pos=v(screen_size-8,screen_size/2),
+								dir=v(-1,0),
+						} end
+				},
+		},
+		{
+				-- wave 1
+				{
+						class=enemy,
+						data=function() return {
+								pos=v(screen_size/2,0),
+								speed=0,
+								dir=v(-1,0),
+        reloadtime=rnd(5) + 120,
+        randomshotoffset=50
+             
+						} end
+				},
+		},
+		{
+		-- wave 2
 				{
 						class=enemy,
 						data=function() return {
@@ -1616,7 +1729,7 @@ waves={
 				},
 		},
 		{
-		-- wave 2
+		-- wave 3
 				{
 						class=enemy,
 						qty=2,
