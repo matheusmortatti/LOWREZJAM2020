@@ -1619,11 +1619,11 @@ function friendtutorial:init()
 		friend:init(self)
 		invoke(function()
 				self:shoot()
-		end,120,self)
+		end,80,self)
 		
 		invoke(function()
 				self.done=true
-		end,240,self)
+		end,120,self)
 end
 
 -------------------------------
@@ -1697,8 +1697,9 @@ waves={
 								pos=v(screen_size/2,0),
 								speed=0,
 								dir=v(-1,0),
-        reloadtime=rnd(5) + 120,
-        randomshotoffset=50  
+        reloadtime=rnd(5) + 60,
+        randomshotoffset=50,
+        changetime=1000 
 						} end
 				},
 		},
