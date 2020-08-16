@@ -792,6 +792,7 @@ tutorial=entity:extend({})
 function tutorial:init()
 		self:become("changingdirection")
 		self.spawner.stopchange=true
+		self.spawner.ignore_wave_start=true
 end
 
 function tutorial:leveling()
@@ -812,6 +813,7 @@ function tutorial:ending()
 		invoke(function()
 				self.player:become("walking")
 				self.spawner.stopchange=false
+				self.spawner.ignore_wave_start=false
 				self.done=true
 		 end, 30, self)
 end
@@ -927,7 +929,7 @@ turnable=dynamic:extend({
 })
 
 function turnable:render() 
-		self:renderrot(self.sprite, self.pos,
+		self:renderrot(self.sprite, self.pos-v(self.size,self.size),
 		self.a, self.size, self.inverted, self.ignore)
 end
 
@@ -1044,14 +1046,18 @@ end
 spawner=entity:extend({
 			wave=1,
 			enemycount=0,
-			friendcount=0
+			friendcount=0,
+			actual_wave=0,
+			draw_order=7,
+			t_between_waves=90
 })
 
 function spawner:init()
 		self:beginwave()
+		self:become("updatewave")
 end
 
-function spawner:update()
+function spawner:updatewave()
 		if self.enemycount==0 
 				and not self.stopchange then
 				self:nextwave()
@@ -1062,9 +1068,22 @@ function spawner:update()
 		end
 end
 
+function spawner:wavestart()
+	if self.t>self.t_between_waves then
+		self:become("updatewave")
+		self:beginwave()
+	end
+end
+
 function spawner:nextwave()
 		self.wave+=1
-		self:beginwave()
+		
+		if not self.ignore_wave_start then
+			self.actual_wave+=1
+			self:become("wavestart")
+		else
+			self:beginwave()
+		end
 end
 
 function spawner:beginwave()
@@ -1101,6 +1120,16 @@ end
 
 function spawner:enemydestroyed()
 		self.enemycount-=1
+end
+
+function spawner:render()
+	if self.state=="wavestart" then
+		rectfill(0,45,64,51,13)
+		print(
+			"wave: " .. tostr(self.actual_wave),
+			16,46,7
+		)
+	end
 end
 
 -------------------------------
@@ -1194,7 +1223,7 @@ end
 function player:shoot()
   e_add(self.bullet{
     speed=3,
-    pos=v(self.pos.x, self.pos.y),
+    pos=v(self.pos.x-self.size, self.pos.y-self.size),
     shtangle=self.a,
     origin=self})
 end
