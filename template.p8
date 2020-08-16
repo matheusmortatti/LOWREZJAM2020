@@ -847,10 +847,26 @@ function tutorial:leveling()
 end
 
 function tutorial:changingdirection()
-		self.showtext=true
-		if self.player.a~=0 then
-				self:become("leveling")
-				invoke(function() self.spawner:nextwave() end, 30, self)
+		self.showtextdir=true
+		if self.player.a~=0 
+		 and not self.directionchanged then
+		 	self.directionchanged=true
+				invoke(function() 
+						self.showtextdir=false
+						self:become("shooting")
+						self.spawner:nextwave()
+					end, 30, self)
+		end
+end
+
+function tutorial:shooting()
+		if not self.showtextshooting then
+			self.showtextshooting=true
+			printh(self.showtextshooting)
+			invoke(function()
+					self.showtextshooting=false
+					self:become("leveling")
+			 end, 120, self)
 		end
 end
 
@@ -864,10 +880,13 @@ function tutorial:ending()
 end
 
 function tutorial:render()
-		if self.showtext then
+		if self.showtextdir then
 			print("x+arrows:",
 					15,screen_size*2/3, 7)
 			print("change direction",
+					0,screen_size*5/6, 7)
+		elseif self.showtextshooting then
+			print("press z to shoot",
 					0,screen_size*5/6, 7)
 		end
 end
@@ -1703,11 +1722,11 @@ end
 function friendtutorial:start()
 	invoke(function(e)
 				e:shoot()
-		end,80,self)
+		end,120,self)
 		
 		invoke(function()
 				self.done=true
-		end,120,self)
+		end,180,self)
 		
 		self:become("none")
 end
@@ -1761,6 +1780,17 @@ waves={
 		-- tutorial
 		{
 				{
+					class=enemy,
+					data=function() return {
+							pos=v(screen_size/2,0),
+							speed=0,
+							dir=v(-1,0),
+       reloadtime=rnd(5) + 60,
+       randomshotoffset=25,
+       changetime=1000 
+					} end
+				},
+				{
 						class=friendtutorial,
 						data=function() return {
 								pos=v(0,screen_size/2),
@@ -1780,12 +1810,17 @@ waves={
 				{
 						class=enemy,
 						data=function() return {
-								pos=v(screen_size/2,0),
+								pos=v(screen_size/2,screen_size-12),
 								speed=0,
 								dir=v(-1,0),
-        reloadtime=rnd(5) + 60,
-        randomshotoffset=50,
-        changetime=1000 
+						} end
+				},
+				{
+						class=friend,
+						data=function() return {
+								pos=v(screen_size/2,0),
+								speed=0,
+								dir=v(-1,0)
 						} end
 				},
 		},
