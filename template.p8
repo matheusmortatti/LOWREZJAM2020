@@ -722,7 +722,7 @@ end
 function deadstate:draw()
 	cls()
 	
-	local survived="waves: " .. tostr(self.wave)
+	local survived="waves: " .. tostr(self.wave-1)
 	local timeplayed="time played: " .. tostr(flr(self.time/30)) .. "s"
 	local press="press x"
 	local restart="to restart"
@@ -1279,7 +1279,7 @@ function player:take_hit(dmg)
 				
     if not valid and not self.done then
       self.done=true
-      invoke(function() change_state(deadstate, self.spawner.wave,self.spawner.t) end,30,self)
+      invoke(function() change_state(deadstate, self.spawner.actual_wave,self.spawner.t) end,30,self)
       explode(
         self.pos.x, self.pos.y,
         self.hitbox.xr-self.hitbox.xl,
