@@ -1122,6 +1122,10 @@ function spawner:init()
 end
 
 function spawner:updatewave()
+		printh(self.stopchange)
+		printh(player.level)
+		printh(self.friendcount)
+		printh("------------")
 		if self.enemycount==0 
 				and not self.stopchange then
 				self:nextwave()
@@ -1569,7 +1573,7 @@ npc=changeable:extend({
 		speed=1,
     reloadtime=30,
     reloadthresh=10,
-    randomshotoffset=10,
+    randomshotoffset=5,
 				
     hitbox=box(0,0,8,8),
     sprite=4,
@@ -1698,6 +1702,7 @@ enemy=npc:extend({
 friend=npc:extend({
     sprite=40,
     asize=4,
+    reloadtime=50,
     randomshotoffset=25,
     bullet=friendbullet,
     sprchange=24
@@ -1726,6 +1731,9 @@ function friendtutorial:start()
 		
 		invoke(function()
 				self.done=true
+				if self.ondestroy then
+     	self.ondestroy:exec()
+    end
 		end,180,self)
 		
 		self:become("none")
@@ -1786,7 +1794,7 @@ waves={
 							speed=0,
 							dir=v(-1,0),
        reloadtime=rnd(5) + 60,
-       randomshotoffset=25,
+       randomshotoffset=15,
        changetime=1000 
 					} end
 				},
@@ -1819,13 +1827,75 @@ waves={
 						class=friend,
 						data=function() return {
 								pos=v(screen_size/2,0),
-								speed=0,
+								speed=rnd(2),
 								dir=v(-1,0)
 						} end
 				},
 		},
 		{
 		-- wave 2
+				{
+						class=enemy,
+						qty=3,
+						data=function() return {
+								pos=v(rnd(64),0),
+								speed=rnd(2),
+								dir=v(1,0),
+                reloadtime=rnd(5) + 25
+						} end
+				},
+		},
+		{
+		-- wave 3
+				{
+						class=enemy,
+						qty=1,
+						data=function() return {
+								pos=v(rnd(20),0),
+								speed=rnd(2),
+								dir=v(1,0),
+                reloadtime=rnd(5) + 25
+						} end
+				},
+				{
+						class=enemy,
+						qty=2,
+						data=function() return {
+								pos=v(rnd(20),screen_size-12),
+								speed=rnd(2),
+								dir=v(1,0),
+                reloadtime=rnd(5) + 25
+						} end
+				},
+		},
+		{
+		-- wave 4
+				{
+						class=enemy,
+						data=function() return {
+								pos=v(0,rnd(20)),
+								speed=rnd(2),
+								dir=v(-1,0),
+                reloadtime=rnd(5) + 25,
+                move=sine_movement,
+                aspeed=0.05,
+						} end
+				},
+				{
+						class=enemy,
+						data=function() return {
+								pos=v(screen_size,rnd(20)),
+								speed=rnd(2),
+								dir=v(-1,0),
+                reloadtime=rnd(5) + 10,
+                move=point_movement,
+                points={v(8,8),v(8,56),v(56,56),v(56,8)},
+                cur_point=1
+						} end
+				},
+		},
+		{
+		-- wave 5
 				{
 						class=enemy,
 						data=function() return {
@@ -1840,8 +1910,20 @@ waves={
 				{
 						class=friend,
 						data=function() return {
-								pos=v(screen_size,rnd(20)),
+								pos=v(rnd(screen_size),rnd(20)),
 								speed=rnd(2),
+								dir=v(-1,0),
+                reloadtime=rnd(5) + 25,
+                move=sine_movement,
+                aspeed=0.05,
+						} end
+				},
+				{
+						class=enemy,
+						qty=2,
+						data=function() return {
+								pos=v(rnd(screen_size),rnd(20)),
+								speed=rnd(3),
 								dir=v(-1,0),
                 reloadtime=rnd(5) + 10,
                 move=point_movement,
@@ -1849,28 +1931,6 @@ waves={
                 cur_point=1
 						} end
 				},
-		},
-		{
-		-- wave 3
-				{
-						class=enemy,
-						qty=2,
-						data=function() return {
-								pos=v(0,0),
-								speed=rnd(2),
-								dir=v(1,0),
-                reloadtime=rnd(5) + 25
-						} end
-				},
-				{
-						class=friend,
-						data=function() return {
-								pos=v(screen_size,0),
-								speed=rnd(2),
-								dir=v(-1,0),
-                reloadtime=rnd(5) + 10
-						} end
-				}
 		}
 }
 -->8
