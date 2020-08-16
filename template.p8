@@ -815,7 +815,14 @@ end
 
 function menu:render()
 		map(8,8,0,0,8,8)
-		print("press x to start", 0, screen_size/2)
+		local press="press x to start"
+		local title="ghost hit"
+		print(
+			press,
+			(64-#press*4)/2,screen_size/2+10,7)
+		print(
+			title,
+			(64-#title*4)/2,screen_size/2-10,7)
 end
 
 -------------------------------
@@ -1151,7 +1158,7 @@ function spawner:nextwave()
 			for e in all(self.npcs) do
 				if not e.done and e:is_a("friend") then
 					e.ptr=e.reloadtime
-					e.reloadtime=100000
+					e.reloadtime=10000
 				end
 			end
 		else
