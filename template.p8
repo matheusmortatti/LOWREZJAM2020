@@ -1,7 +1,6 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
-
 ------------------------------------
 -- Base Objects
 ------------------------------------
@@ -1209,7 +1208,8 @@ end
 
 -- This update function will always get called
 function player:update()
-  
+  self.pos.x=clamp(0,screen_size-self.size*6,self.pos.x)
+  self.pos.y=clamp(0,screen_size-self.size*6,self.pos.y)
 end
 
 function player:begin()
