@@ -723,7 +723,7 @@ function deadstate:draw()
 	cls()
 	
 	local survived="waves: " .. tostr(self.wave)
-	local timeplayed="time played: " .. tostr(self.time/30) .. "s"
+	local timeplayed="time played: " .. tostr(flr(self.time/30)) .. "s"
 	print(
 		survived,
 		(64-#survived*4)/2,28,7
