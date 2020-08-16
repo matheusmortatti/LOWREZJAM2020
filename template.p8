@@ -1140,7 +1140,7 @@ function spawner:wavestart()
 end
 
 function spawner:nextwave()
-		self.wave+=1
+		self.wave=min(#waves,self.wave+1)
 		
 		if not self.ignore_wave_start then
 			self.actual_wave+=1
