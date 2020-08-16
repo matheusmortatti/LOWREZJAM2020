@@ -724,13 +724,23 @@ function deadstate:draw()
 	
 	local survived="waves: " .. tostr(self.wave)
 	local timeplayed="time played: " .. tostr(flr(self.time/30)) .. "s"
+	local press="press x"
+	local restart="to restart"
 	print(
 		survived,
-		(64-#survived*4)/2,28,7
+		(64-#survived*4)/2,24,7
 		)
 	print(
 		timeplayed,
-		(64-#timeplayed*4)/2,34,7
+		(64-#timeplayed*4)/2,30,7
+		)
+	print(
+		press,
+		(64-#press*4)/2,40,13
+		)
+	print(
+		restart,
+		(64-#restart*4)/2,46,13
 		)
 end
 
