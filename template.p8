@@ -815,7 +815,14 @@ end
 
 function menu:render()
 		map(8,8,0,0,8,8)
-		print("press x to start", 0, screen_size/2)
+		local press="press x to start"
+		local title="ghost hit"
+		print(
+			press,
+			(64-#press*4)/2,screen_size/2+10,7)
+		print(
+			title,
+			(64-#title*4)/2,screen_size/2-10,7)
 end
 
 -------------------------------
@@ -1113,7 +1120,8 @@ spawner=entity:extend({
 			friendcount=0,
 			actual_wave=0,
 			draw_order=7,
-			t_between_waves=90
+			t_between_waves=90,
+			npcs={}
 })
 
 function spawner:init()
@@ -1121,11 +1129,7 @@ function spawner:init()
 		self:become("updatewave")
 end
 
-function spawner:updatewave()
-		printh(self.stopchange)
-		printh(player.level)
-		printh(self.friendcount)
-		printh("------------")
+function spawner:updatewave()	
 		if self.enemycount==0 
 				and not self.stopchange then
 				self:nextwave()
@@ -1136,7 +1140,7 @@ function spawner:updatewave()
 		end
 end
 
-function spawner:wavestart()
+function spawner:wavestart()	
 	if self.t>self.t_between_waves then
 		self:become("updatewave")
 		self:beginwave()
@@ -1149,12 +1153,27 @@ function spawner:nextwave()
 		if not self.ignore_wave_start then
 			self.actual_wave+=1
 			self:become("wavestart")
+			
+			-- stop friends from shooting you
+			for e in all(self.npcs) do
+				if not e.done and e:is_a("friend") then
+					e.ptr=e.reloadtime
+					e.reloadtime=10000
+				end
+			end
 		else
 			self:beginwave()
 		end
 end
 
 function spawner:beginwave()
+		-- delete from table all enemies that are done
+		for i=#self.npcs,1,-1 do
+			if self.npcs[i].done then
+				del(self.npcs,self.npcs[i])
+			end
+		end
+		
 		for _,elem in pairs(waves[self.wave]) do
 				for _=1,(elem.qty or 1) do
 						e=elem.class:extend(elem.data()){}
@@ -1174,11 +1193,20 @@ function spawner:beginwave()
 										}
 								end
 						end
+						
+						e.ptr=e.reloadtime
+						add(self.npcs, e)
 						e_add(grave{
 							pos=v(e.pos.x,e.pos.y),
 							spawn=e
 							})
 				end
+		end
+		
+		for e in all(self.npcs) do
+			if not e.done and e:is_a("friend") then
+				e.reloadtime=e.ptr
+			end
 		end
 end
 
@@ -1247,9 +1275,9 @@ end
 
 -- This one is a state-specific update function
 function player:walking()
-  if not btn(5) then
-  	self:setspeed()
-  end
+ 	self:setspeed(
+ 		btn(5) and 0 or self.acc,
+ 		btn(5) and self.friction/2 or self.friction)
   	
   self:setangle()
   
@@ -1258,12 +1286,13 @@ function player:walking()
   end
 end
 
-function player:setspeed() 
+function player:setspeed(acc,fric) 
 	prev = v(self.vel.x, self.vel.y)
-  if (btn(0)) self.vel.x -= self.acc
-  if (btn(1)) self.vel.x += self.acc
-  if (btn(2)) self.vel.y -= self.acc
-  if (btn(3)) self.vel.y += self.acc
+	
+ if (btn(0)) self.vel.x -= acc
+ if (btn(1)) self.vel.x += acc
+ if (btn(2)) self.vel.y -= acc
+ if (btn(3)) self.vel.y += acc
 		
 	norm=self.vel:norm()
  	len=min(self.vel:len(),
@@ -1271,7 +1300,7 @@ function player:setspeed()
  
   if prev == self.vel then
   	len=approach(len, 0,
-  		self.friction)
+  		fric)
   end
  
  	self.vel=norm * len
@@ -1705,7 +1734,8 @@ friend=npc:extend({
     reloadtime=50,
     randomshotoffset=25,
     bullet=friendbullet,
-    sprchange=24
+    sprchange=24,
+    tags={"npc","friend"}
 })
 
 -------------------------------
